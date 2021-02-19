@@ -23,7 +23,7 @@ int powerLevel = 40;
 bool settled = false;
 int sensorValue = 0;
 int previousTargetValue = 0;
-int initialLevel = 1;  // initial level should be easiest
+int initialLevel = 0;  // initial level should be easiest
 int targetValue = -1;
 
 void setup()
@@ -62,7 +62,12 @@ void setup()
   lcd.begin(16, 2);
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("TBOS");
+  if (debugSensor > 150){
+    lcd.print("TBOS");
+  }
+  else {
+    lcd.print("TBOS - debug");
+  }  
   lcd.setCursor(0, 1);
   String t1 = "Start level: ";
   String t2 = t1 + initialLevel;
