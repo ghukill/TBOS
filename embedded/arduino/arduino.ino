@@ -5,26 +5,25 @@
 // include the library code:
 #include <LiquidCrystal.h>
 
-#define ENABLE 5
-#define DIRA 3
-#define DIRB 4
+#define ENABLE 3
+#define DIRA 4
+#define DIRB 5
 
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(7, 8, 9, 10, 11, 12);
 
-// setup motor constants
+// init global variables
 int lowerBound = -1;
 int upperBound = -1;
 int servoSweepPause = 0;
 int servoReadPause = 0;
 int stepInc = -1;
 const int proximityThreshold = 3;
-
-// flags and global variables
+int powerLevel = 40;
 bool settled = false;
 int sensorValue = 0;
 int previousTargetValue = 0;
-int initialLevel = 5;
+int initialLevel = 1;  // initial level should be easiest
 int targetValue = -1;
 
 void setup()
@@ -34,34 +33,36 @@ void setup()
   Serial.begin(9600);
 
   // setup constants based on debug mode
-  int debugSensor = analogRead(A1);
-  if (debugSensor > 0){
-    Serial.println("DEBUG MODE: false");
+  int debugSensor = analogRead(A1);  
+  Serial.print("debug sensor reading: ");
+  Serial.println(debugSensor);
+  if (debugSensor > 150){
+    Serial.println("debug mode: false");
     lowerBound = 240;
     upperBound = 640;
     servoSweepPause = -1;
     servoReadPause = -1;
   }
   else {
-    Serial.println("DEBUG MODE: true");
+    Serial.println("debug mode: true");
     lowerBound = 10;
     upperBound = 610;
-    servoSweepPause = 6;
-    servoReadPause = 50; 
+    servoSweepPause = 20;
+    servoReadPause = 25; 
   }
   stepInc = int(int(upperBound - lowerBound) / 20);
   targetValue = upperBound - (stepInc * initialLevel);
   Serial.print("initial target: ");
   Serial.println(targetValue);
     
-  Serial.print("step: ");
+  Serial.print("step increment: ");
   Serial.println(stepInc);
 
   // clear LCD
   lcd.begin(16, 2);
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Get your TBOS on");
+  lcd.print("TBOS");
   lcd.setCursor(0, 1);
   String t1 = "Start level: ";
   String t2 = t1 + initialLevel;
@@ -73,6 +74,8 @@ void setup()
   pinMode(ENABLE, OUTPUT);
   pinMode(DIRA, OUTPUT); // currently counter-clockwise
   pinMode(DIRB, OUTPUT); // currently clockwise
+
+  Serial.println("SETUP END----------------------------");
 }
 
 void updateLCD(int sensorValue, int targetValue)
@@ -96,22 +99,25 @@ void updateLCD(int sensorValue, int targetValue)
 
 void adjustPosition(int sensorValue, int targetValue)
 {
-  // send message that adjusting
+  // Function to to move the motor towards a target value
+
+  // debug serial message that adjusting
   Serial.print("Position adjust amount: ");
   Serial.println(sensorValue - targetValue);
   lcd.setCursor(12, 0);
   lcd.print(" ");
+  
   if (sensorValue > targetValue)
   {
     // move counter-clockwise (DIRA)
-    digitalWrite(ENABLE, HIGH);
+    analogWrite(ENABLE, powerLevel);
     digitalWrite(DIRA, HIGH);
     digitalWrite(DIRB, LOW);
   }
   else
   {
     // move clockwise (DIRB)
-    digitalWrite(ENABLE, HIGH);
+    analogWrite(ENABLE, powerLevel);
     digitalWrite(DIRA, LOW);
     digitalWrite(DIRB, HIGH);
   }
@@ -119,7 +125,7 @@ void adjustPosition(int sensorValue, int targetValue)
   // DEBUG SERVO: move slowly and then stop
   if (servoSweepPause > 0) {
     delay(servoSweepPause);
-    digitalWrite(ENABLE, LOW);
+    analogWrite(ENABLE, 0);
   }
 
 }
@@ -191,7 +197,7 @@ void loop()
   // if within threshold, set as settled and stop
   else if (abs(sensorValue - targetValue) <= proximityThreshold)
   {
-    digitalWrite(ENABLE, LOW);
+    analogWrite(ENABLE, 0);
     settled = true;
     previousTargetValue = targetValue;
     lcd.setCursor(13, 0);
