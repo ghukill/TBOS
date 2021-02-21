@@ -70,26 +70,33 @@ def g1(level):
     return True
 
 
-def ramp(start=0, power=50, steps=25, duration=2.0, dir='+'):
+def ramp(start_power=0, end_power=50, steps=25, duration=2.0, dir='+'):
 
     """
-    Function to bring motor up to speed in 0.25s
+    Function to smoothly apply and reduce power from start to end
     :return:
     """
 
     # p = int((ch.capture() / 84000) * 100)
-    p = start
+    p = start_power
     for x in range(0, steps):
         if dir == '+':
-            p += int(power / steps)
+            p += int(end_power / steps)
         else:
-            p -= int(power / steps)
+            p -= int(end_power / steps)
         ch.pulse_width_percent(p)
         time.sleep(duration/steps)
     return True
 
 
-def sweep(duration=1, start=0, power=50, dir="+"):
+def sweep(duration=1, start_power=0, end_power=50, dir="+"):
+
+    """
+    Function to sweep for a specific duration and power level
+
+    :param duration: length of time in seconds to move
+    :param start: lower bound on power 
+    """
 
     # start no power
     ch.pulse_width_percent(0)
@@ -103,18 +110,30 @@ def sweep(duration=1, start=0, power=50, dir="+"):
         in2.low()
 
     # accelerate
-    ramp(start=start, target=power, duration=(duration / 2), dir="+")
+    ramp(start_power=start_power, end_power=end_power, duration=(duration / 2), dir="+")
 
     # decelerate
-    ramp(start=power, target=power, duration=(duration / 2), dir="-")
+    ramp(start_power=start_power, end_power=end_power, duration=(duration / 2), dir="-")
 
+    # kill power and return
     ch.pulse_width_percent(0)
     return True
 
 
-def move(steps, dir, power=50):
+def move(steps, dir, start_power=0, end_power=50):
+
+    """
+    Function to apply a discrete number of small, smooth sweeps
+    
+    :param steps: number of sweeps
+    :param dir: direction
+        - "+": increase sensor position reading
+        - "-": decrease sensor position reading
+    :param power: power to 
+    """
+
     for x in range(0, steps):
-        sweep(duration=0.04, dir=dir, power=power)
+        sweep(duration=0.04, dir=dir, start_power=start_power, end_power=end_power)
 
 
 def g2(level):
@@ -151,9 +170,9 @@ def g2(level):
             power = 50
 
         if current < target:
-            move(5, dir="-", power=power)
+            move(5, dir="-", end_power=power)
         else:
-            move(5, dir="+", power=power)
+            move(5, dir="+", end_power=power)
 
     print("required loops: %s" % loop_count)
     return True
