@@ -16,9 +16,8 @@ vcp = pyb.USB_VCP()
 # vcp.setinterrupt(-1) # NOTE: might need if 3...
 
 while True:
-    data = vcp.read()
-    if data is not None:
-        vcp.write(data)
-    time.sleep(.5)
-
+    time.sleep(1)
+    data = vcp.readline()
+    if data is not None:                
+        vcp.write(("pyboard|%s\n" % data).encode('utf-8'))
 
