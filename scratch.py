@@ -1,9 +1,5 @@
 """
-Reading from serial...
-
-import serial
-ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
-ser.write(b'1')
+Serial testing
 """
 
 import time
@@ -14,8 +10,10 @@ vcp = pyb.USB_VCP()
 # vcp.setinterrupt(-1) # NOTE: might need if 3...
 
 while True:
-    time.sleep(1)
-    data = vcp.readline()
-    if data is not None:                
-        vcp.write(("pyboard|%s\n" % data).encode('utf-8'))
+    pyb.delay(200) # listen delay
+    if vcp.any() > 0:
+        pyb.delay(100) # know data coming, wait for complete
+        data = vcp.readline()
+        vcp.write(b'pyboard copy')
+        pyb.delay(200) # wait for pi to gobble
 
