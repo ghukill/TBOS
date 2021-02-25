@@ -130,9 +130,9 @@ def move_to_level_position(level):
             power = 50
 
         if current < target:
-            move(5, dir="-", end_power=power)
+            move(5, dir="-", start_power=10, end_power=power)
         else:
-            move(5, dir="+", end_power=power)
+            move(5, dir="+", start_power=10, end_power=power)
 
     # print("required loops: %s" % loop_count)
     return (level, target, current)
@@ -145,7 +145,7 @@ def rando():
 
 
 def move_to_level_position_BAK(level):
-    ch.pulse_width_percent(50)  # 9v @ 50% = 5.69v
+    ch.pulse_width_percent(100)  # 9v @ 50% = 5.69v
 
     target = lower_bound + (level * step)
 
