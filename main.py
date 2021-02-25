@@ -1,18 +1,32 @@
 """
-Serial testing
+TBOS pyboard v1
 """
 
 import pyb
 
-# pyb.usb_mode('VCP')
+from controller.embedded import move_to_level_position
 
+# init vcp communicator
+# TODO: consider communications file in controller directory
 vcp = pyb.USB_VCP()
-# vcp.setinterrupt(-1) # NOTE: might need if 3...
 
+# main loop
 while True:
-    pyb.delay(200) # listen delay
+
+    # listen delay
+    pyb.delay(200) 
     if vcp.any() > 0:
-        pyb.delay(100) # know data coming, wait for complete
+        
+        # data incoming, pause to finish then read
+        pyb.delay(100)
         data = vcp.readline()
-        vcp.write(("pyboard copy: %s" % (data.decode())).encode())
+
+        # if data is an integer between 0-19, move motor position 
+        ddata = data.decode()
+        if int(ddata) in list(range(0,20)):
+            result_tup = move_to_level_position(int(ddata))
+            vcp.write(("position change: %s" % (str(result_tup))).encode())
+        
+        # responsd
+        vcp.write(("unhandled command: %s" % (data.decode())).encode())
         pyb.delay(200) # wait for pi to gobble

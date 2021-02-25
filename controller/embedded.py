@@ -1,3 +1,9 @@
+"""
+Code for embedded TBOS functionality:
+    - resistance motor control
+    - speed sensor
+    - power management
+"""
 
 import random
 import time
@@ -22,52 +28,6 @@ lower_bound = 100
 upper_bound = 3800
 step = int((upper_bound - lower_bound) / 20)
 print("Step increment: %s" % (step))
-
-
-def g1(level):
-    ch.pulse_width_percent(50)  # 9v @ 50% = 5.69v
-
-    target = lower_bound + (level * step)
-
-    prev_diff = 0
-    loop_count = 0
-    while True:
-
-        loop_count += 1
-
-        # triple beam
-        reads = 0
-        num = 10
-        accuracy = 0.03
-        for x in range(0,num):
-            reads += pos.read()
-            time.sleep(accuracy / num)
-        current = int(reads/num)
-
-        diff = current - target
-        print("Target: %s, Current: %s, Prev Diff: %s, Diff: %s, Change: %s" % (target, current, prev_diff, diff, (prev_diff - diff)))
-        prev_diff = diff
-
-        # determine if settled
-        if  abs(diff) < 10:
-            in1.low()
-            in2.low()
-            print('settled!')
-            break
-
-        if current < target:
-            in1.high()
-            in2.low()
-        else:
-            in1.low()
-            in2.high()
-
-        time.sleep(0.002)
-        in1.low()
-        in2.low()
-
-    print("required loops: %s" % loop_count)
-    return True
 
 
 def ramp(start_power=0, end_power=50, steps=25, duration=2.0, dir='+'):
@@ -136,11 +96,12 @@ def move(steps, dir, start_power=0, end_power=50):
         sweep(duration=0.04, dir=dir, start_power=start_power, end_power=end_power)
 
 
-def g2(level):
+def move_to_level_position(level):
 
     target = lower_bound + (level * step)
     prev_diff = 0
     loop_count = 0
+    current = 0
     while True:
         loop_count += 1
 
@@ -153,13 +114,12 @@ def g2(level):
             time.sleep(accuracy / num)
         current = int(reads / num)
         diff = current - target
-        print("Target: %s, Current: %s, Prev Diff: %s, Diff: %s, Change: %s" % (
-        target, current, prev_diff, diff, (prev_diff - diff)))
+        # print("Target: %s, Current: %s, Prev Diff: %s, Diff: %s, Change: %s" % (target, current, prev_diff, diff, (prev_diff - diff)))
         prev_diff = diff
 
         # determine if settled
         if abs(diff) < 10:
-            print('settled!')
+            # print('settled!')
             break
 
         if abs(diff) > 1500:
@@ -174,11 +134,57 @@ def g2(level):
         else:
             move(5, dir="+", end_power=power)
 
-    print("required loops: %s" % loop_count)
-    return True
+    # print("required loops: %s" % loop_count)
+    return (level, target, current)
 
 
 def rando():
     while True:
-        g2(random.randint(1,20))
+        move_to_level_position(random.randint(1,20))
         time.sleep(2)
+
+
+def move_to_level_position_BAK(level):
+    ch.pulse_width_percent(50)  # 9v @ 50% = 5.69v
+
+    target = lower_bound + (level * step)
+
+    prev_diff = 0
+    loop_count = 0
+    while True:
+
+        loop_count += 1
+
+        # triple beam
+        reads = 0
+        num = 10
+        accuracy = 0.03
+        for x in range(0,num):
+            reads += pos.read()
+            time.sleep(accuracy / num)
+        current = int(reads/num)
+
+        diff = current - target
+        print("Target: %s, Current: %s, Prev Diff: %s, Diff: %s, Change: %s" % (target, current, prev_diff, diff, (prev_diff - diff)))
+        prev_diff = diff
+
+        # determine if settled
+        if  abs(diff) < 10:
+            in1.low()
+            in2.low()
+            print('settled!')
+            break
+
+        if current < target:
+            in1.high()
+            in2.low()
+        else:
+            in1.low()
+            in2.high()
+
+        time.sleep(0.002)
+        in1.low()
+        in2.low()
+
+    print("required loops: %s" % loop_count)
+    return True
