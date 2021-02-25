@@ -17,16 +17,20 @@ while True:
     pyb.delay(200) 
     if vcp.any() > 0:
         
-        # data incoming, pause to finish then read
+        # data incoming, pause, read, decode
         pyb.delay(100)
         data = vcp.readline()
+        ddata = data.decode()
 
         # if data is an integer between 0-19, move motor position 
-        ddata = data.decode()
-        if int(ddata) in list(range(0,20)):
-            result_tup = move_to_level_position(int(ddata))
-            vcp.write(("position change: %s" % (str(result_tup))).encode())
-        
-        # responsd
+        try:
+            ddata_int = int(ddata)
+            if ddata_int in list(range(0,20)):
+                result_tup = move_to_level_position(ddata_int)
+                vcp.write(("position change: %s" % (str(result_tup))).encode())
+        except:
+            pass
+
+        # respond with unhandled
         vcp.write(("unhandled command: %s" % (data.decode())).encode())
         pyb.delay(200) # wait for pi to gobble
