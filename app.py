@@ -6,27 +6,36 @@ import time
 
 from flask import Flask, request
 from flask import render_template
-import serial
-ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+
+# import serial
+# ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
+
+from controller.driver import direct_move
 
 
 app = Flask(__name__)
 
-@app.route('/', methods=['GET','POST'])
+
+@app.route("/", methods=["GET", "POST"])
 def index():
 
-    if request.method == 'GET':
-        return render_template('index.html')
+    if request.method == "GET":
+        return render_template("index.html")
 
-    if request.method == 'POST':
+    if request.method == "POST":
 
-        level = request.values.get('level', None)
-        ser.flush()
-        ser.write(level.encode('utf-8'))
-        while True:
-            msg = ser.readline()
-            if msg != b'':
-                break
+        level = request.values.get("level", None)
 
-        return render_template('index.html', msg=msg.decode('utf-8'))
+        # # move via serial
+        # ser.flush()
+        # ser.write(level.encode('utf-8'))
+        # while True:
+        #     msg = ser.readline()
+        #     if msg != b'':
+        #         break
+        # msg = msg.decode('utf-8')
 
+        # move via repl execution
+        msg = direct_move(int(level))
+
+        return render_template("index.html", msg=msg)
