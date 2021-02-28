@@ -1,5 +1,9 @@
 # TBOS
 
+## Reference
+  * Pyboard pins: http://micropython.org/resources/pybv11-pinout.jpg
+  * Awesome-MicroPython (list of libs): https://awesome-micropython.com/
+
 ## Data Flow
 ```
 GUI --> Flask API --> embedded pyboard

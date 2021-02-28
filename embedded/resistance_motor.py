@@ -3,6 +3,9 @@ Code for embedded TBOS functionality:
     - resistance motor control
     - speed sensor
     - power management
+
+NOTE:
+    - possible to use interrupt movement via constant read: https://github.com/alanmitchell/micropython-inputs
 """
 
 import random
