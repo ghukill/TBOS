@@ -12,11 +12,11 @@ import pyb
 
 # define pins
 pos = pyb.ADC(0)
-enable = pyb.Pin('X2')
+enable = pyb.Pin("X2")
 tim = pyb.Timer(2, freq=1000)
 ch = tim.channel(2, pyb.Timer.PWM, pin=enable)
-in1 = pyb.Pin('X3', pyb.Pin.OUT_PP)
-in2 = pyb.Pin('X4', pyb.Pin.OUT_PP)
+in1 = pyb.Pin("X3", pyb.Pin.OUT_PP)
+in2 = pyb.Pin("X4", pyb.Pin.OUT_PP)
 
 # turn off
 ch.pulse_width_percent(0)
@@ -30,7 +30,7 @@ step = int((upper_bound - lower_bound) / 20)
 print("Step increment: %s" % (step))
 
 
-def ramp(start_power=0, end_power=50, steps=25, duration=2.0, dir='+'):
+def ramp(start_power=0, end_power=50, steps=25, duration=2.0, dir="+"):
 
     """
     Function to smoothly apply and reduce power from start to end
@@ -40,12 +40,12 @@ def ramp(start_power=0, end_power=50, steps=25, duration=2.0, dir='+'):
     # p = int((ch.capture() / 84000) * 100)
     p = start_power
     for x in range(0, steps):
-        if dir == '+':
+        if dir == "+":
             p += int(end_power / steps)
         else:
             p -= int(end_power / steps)
         ch.pulse_width_percent(p)
-        time.sleep(duration/steps)
+        time.sleep(duration / steps)
     return True
 
 
@@ -55,7 +55,7 @@ def sweep(duration=1, start_power=0, end_power=50, dir="+"):
     Function to sweep for a specific duration and power level
 
     :param duration: length of time in seconds to move
-    :param start: lower bound on power 
+    :param start: lower bound on power
     """
 
     # start no power
@@ -84,12 +84,12 @@ def move(steps, dir, start_power=0, end_power=50):
 
     """
     Function to apply a discrete number of small, smooth sweeps
-    
+
     :param steps: number of sweeps
     :param dir: direction
         - "+": increase sensor position reading
         - "-": decrease sensor position reading
-    :param power: power to 
+    :param power: power to
     """
 
     for x in range(0, steps):
@@ -140,7 +140,7 @@ def move_to_level_position(level):
 
 def rando():
     while True:
-        move_to_level_position(random.randint(1,20))
+        move_to_level_position(random.randint(1, 20))
         time.sleep(2)
 
 
@@ -159,20 +159,23 @@ def move_to_level_position_BAK(level):
         reads = 0
         num = 10
         accuracy = 0.03
-        for x in range(0,num):
+        for x in range(0, num):
             reads += pos.read()
             time.sleep(accuracy / num)
-        current = int(reads/num)
+        current = int(reads / num)
 
         diff = current - target
-        print("Target: %s, Current: %s, Prev Diff: %s, Diff: %s, Change: %s" % (target, current, prev_diff, diff, (prev_diff - diff)))
+        print(
+            "Target: %s, Current: %s, Prev Diff: %s, Diff: %s, Change: %s"
+            % (target, current, prev_diff, diff, (prev_diff - diff))
+        )
         prev_diff = diff
 
         # determine if settled
-        if  abs(diff) < 10:
+        if abs(diff) < 10:
             in1.low()
             in2.low()
-            print('settled!')
+            print("settled!")
             break
 
         if current < target:

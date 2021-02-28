@@ -10,7 +10,7 @@ from flask import render_template
 # import serial
 # ser = serial.Serial('/dev/ttyACM0', 9600, timeout=1)
 
-from controller.driver import direct_move
+from embedded.driver import direct_move
 
 
 app = Flask(__name__)
