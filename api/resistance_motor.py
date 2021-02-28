@@ -1,5 +1,7 @@
 """
 Main host driver of embedded code
+
+TODO: move to clients
 """
 
 import random

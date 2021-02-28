@@ -2,15 +2,22 @@
 TBOS API models
 """
 
-from sqlalchemy import create_engine
+import flask
+
+app = flask.current_app
+
+from .db import db
 
 
-class Bike:
+class Bike(db.Model):
 
     """
     Class to represent the bike / machine
         - configurations, presets, etc.
     """
+
+    id = db.Column(db.String, primary_key=True)
+    comment = db.Column(db.Text, nullable=True)
 
     def adjust_level(self):
         pass

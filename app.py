@@ -5,70 +5,75 @@ TBOS API
 import time
 
 from flask import Flask, request
-from flask import render_template
+from flask_sqlalchemy import SQLAlchemy
 
 from api.models import Bike, Ride
 
-app = Flask(__name__)
-
-######################################################################
-# Test Routes
-######################################################################
-@app.route("/", methods=["GET"])
-def debug_index():
-
-    """
-    TBOS
-    """
-    return f"TBOS"
+from api.db import db
 
 
-@app.route("/debug/ping", methods=["GET", "POST", "PATCH", "DELETE"])
-def debug_ping():
+def create_app():
 
-    """
-    Ping/Pong
-    """
-    return f"{request.method} @ pong"
+    app = Flask(__name__)
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db/tbos.db"
+    db.init_app(app)
 
+    ######################################################################
+    # Test Routes
+    ######################################################################
+    @app.route("/", methods=["GET"])
+    def debug_index():
 
-######################################################################
-# Ride Routes
-######################################################################
-@app.route("/ride/new", methods=["POST"])
-def ride_new():
+        """
+        TBOS
+        """
+        return f"TBOS"
 
-    """
-    Create new Ride
-    """
-    pass
+    @app.route("/debug/ping", methods=["GET", "POST", "PATCH", "DELETE"])
+    def debug_ping():
 
+        """
+        Ping/Pong
+        """
+        return f"{request.method} @ pong"
 
-@app.route("/ride/<ride_uuid>", methods=["GET"])
-def ride_retrieve(ride_uuid):
+    ######################################################################
+    # Ride Routes
+    ######################################################################
+    @app.route("/ride/new", methods=["POST"])
+    def ride_new():
 
-    """
-    Retrieve a Ride
-    """
-    pass
+        """
+        Create new Ride
+        """
+        pass
 
+    @app.route("/ride/<ride_uuid>", methods=["GET"])
+    def ride_retrieve(ride_uuid):
 
-######################################################################
-# API Routes
-######################################################################
-@app.route("/api/pyboard/ping", methods=["GET"])
-def api_pyboard_ping():
+        """
+        Retrieve a Ride
+        """
+        pass
 
-    """
-    Ping pyboard, expect 'pong'
-    """
-    pass
+    ######################################################################
+    # API Routes
+    ######################################################################
+    @app.route("/api/pyboard/ping", methods=["GET"])
+    def api_pyboard_ping():
 
+        """
+        Ping pyboard, expect 'pong'
+        """
+        pass
 
-@app.route("/api/status", methods=["GET"])
-def api_status():
+    @app.route("/api/status", methods=["GET"])
+    def api_status():
 
-    """
-    Retrieve current bike status
-    """
-    pass
+        """
+        Retrieve current bike status
+        """
+        pass
+
+    # return Flask app instance
+    return app
