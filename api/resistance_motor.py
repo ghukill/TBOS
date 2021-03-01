@@ -1,13 +1,9 @@
 """
 Main host driver of embedded code
-
-TODO: move to clients
 """
 
 import random
 import time
-
-import serial
 
 import pyboard
 

@@ -4,4 +4,5 @@ rshell cp ./embedded/main.py /flash/main.py
 rshell cp ./embedded/resistance_motor.py /flash/embedded/resistance_motor.py
 rshell cp ./embedded/rpm_sensor.py /flash/embedded/rpm_sensor.py
 rshell cp ./embedded/inputs.py /flash/embedded/inputs.py
+rshell cp ./embedded/debug.py /flash/embedded/debug.py
 echo "finis!"

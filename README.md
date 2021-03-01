@@ -13,7 +13,10 @@ GUI --> Flask API --> embedded pyboard
 
 TBOS API is a flask app providing HTTP endpoints.  Most all routes expect/return JSON.  The API also provides the primary mechanism for sending commands to the embedded pyboard controller.
 
-### Install Virtual Environment
+Database is SQLlite, stored in `db/tbos.db`
+
+### Install
+#### Create Virtual Environment
 ```python
 # create virtual environment
 python3.7 -m venv venv
@@ -24,6 +27,14 @@ source venv/bin/activate
 # pip installs
 pip install -r requirements.txt
 ```
+
+#### Create Database
+```python
+# from flask shell
+app.db.create_all()
+app.db.session.commit()
+```
+
 
 ### API Routes
 
