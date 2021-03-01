@@ -9,6 +9,7 @@ import flask
 
 app = flask.current_app
 
+from .clients import PyboardClient
 from .db import db
 
 
@@ -29,8 +30,48 @@ class Bike(db.Model):
         },
     )
 
-    def adjust_level(self):
-        pass
+    @classmethod
+    def adjust_level(self, level):
+
+        """
+        Adjust resistance level
+        TODO: limit by config in Bike model
+        """
+
+        # init client
+        pc = PyboardClient()
+
+        # execute
+        response = pc.execute(
+            [
+                ("from embedded.resistance_motor import goto_level", None),
+                (f"goto_level({level})", "json"),
+            ]
+        )[0]
+
+        # response
+        return response
+
+    @classmethod
+    def get_rpm(self, level):
+
+        """
+        Get RPM sensor reading
+        """
+
+        # init client
+        pc = PyboardClient()
+
+        # execute
+        response = pc.execute(
+            [
+                ("from embedded.rpm_sensor import get_rpm", None),
+                (f"get_rpm({level})", "float"),
+            ]
+        )[0]
+
+        # response
+        return response
 
     def get_status(self):
         pass

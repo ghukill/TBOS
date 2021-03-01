@@ -53,10 +53,6 @@ class PyboardClient:
         Issue passed command(s), aggregating responses and returning
         :param cmds: list of tuples, (cmd, response format)
             - e.g. [('repl_ping()', 'string'), ('give_me_json()', 'json')]
-
-        TODO
-            - error handling
-            - response handling
         """
 
         # begin repl session

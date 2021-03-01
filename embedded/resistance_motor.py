@@ -8,7 +8,7 @@ NOTE:
     - possible to use interrupt movement via constant read: https://github.com/alanmitchell/micropython-inputs
 """
 
-import random
+import json
 import time
 
 import pyb
@@ -102,4 +102,13 @@ def goto_level(level, pwm_level=75, debug=False):
 
     if debug:
         print("required loops: %s" % loop_count)
-    return True
+
+    # print/return response
+    response = {
+        "loop_count": loop_count,
+        "level": level,
+        "current": current,
+        "target": target,
+    }
+    print(json.dumps(response))
+    return response
