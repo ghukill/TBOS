@@ -17,6 +17,7 @@ def create_app():
     app = Flask(__name__)
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db/tbos.db"
     db.init_app(app)
+    app.db = db
 
     ######################################################################
     # Test Routes
