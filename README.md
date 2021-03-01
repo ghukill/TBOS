@@ -9,7 +9,11 @@
 GUI --> Flask API --> embedded pyboard
 ```
 
-## Install Virtual Environment
+## API
+
+TBOS API is a flask app providing HTTP endpoints.  Most all routes expect/return JSON.  The API also provides the primary mechanism for sending commands to the embedded pyboard controller.
+
+### Install Virtual Environment
 ```python
 # create virtual environment
 python3.7 -m venv venv
@@ -21,13 +25,23 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## TBOS python shell
+### API Routes
+
+### TBOS API shell
 Start it:
 ```bash
-# TODO:
+# source virtual environment
+source venv/bin/activate
+# fire it up
+flask shell
 ```
 
 Usage
 ```python
-# TODO:
+# TODO...
 ```
+
+
+## GUI
+
+The GUI is a web application that provides a user interface to TBOS.  The GUI will send user inputs to the API, which in turns stores this information and passes along as necessary to the embedded controller.
