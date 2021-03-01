@@ -64,6 +64,7 @@ class PyboardClient:
         for cmd, response_format in cmds:
             try:
                 response = self.pyb.exec(cmd)
+                print(response)
 
                 # if response format is None, continue without touching response
                 if response_format is None:

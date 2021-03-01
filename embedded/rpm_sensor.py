@@ -6,17 +6,19 @@ TODO
 """
 
 from collections import deque
+import json
 import time
 
 import micropython
-
-micropython.alloc_emergency_exception_buf(100)
+import pyb
 
 from .inputs import Manager, Digital
 
+# debugging
+micropython.alloc_emergency_exception_buf(100)
 
 # bookkeeping
-pings = deque((), 480)
+pings = deque((), 120)
 
 
 # setup interrupt manager
@@ -33,17 +35,19 @@ mgr = Manager(
 )
 
 
-def get_rpm(sample_size=10, debug=False):
+def get_rpm(sample_size=5, debug=False):
 
     """
     Calculate RPMs by counting pings
-    TODO: prune pings sometimes...
     """
 
+    # delay for sample size duration to allow manager interrupts
+    pyb.delay(sample_size * 1000)
+
+    # after delay, get second to move backwards from
     current_second = int(time.time())
 
     # copy pings to local instance
-    # NOTE: possible shuffle if incoming, but that's okay
     # print("BEFORE length of pings: %s" % len(pings))
     _pings = []
     while len(pings) > 0:
@@ -54,20 +58,24 @@ def get_rpm(sample_size=10, debug=False):
 
     # if not pings, return 0
     if len(_pings) == 0:
-        return 0.0
+        rpm = 0.0
 
-    # reduce to sample size
-    sample_pings = []
-    while len(_pings) > 0:
-        ping = _pings.pop()
-        if (current_second - ping) >= sample_size:
-            # print("breaking because ping is too old...")
-            break
-        else:
-            sample_pings.append(ping)
+    else:
+        # reduce to sample size
+        sample_pings = []
+        while len(_pings) > 0:
+            ping = _pings.pop()
+            if (current_second - ping) >= sample_size:
+                # print("breaking because ping is too old...")
+                break
+            else:
+                sample_pings.append(ping)
 
-    # math it up and return
-    # print("length sample pings: %s" % len(sample_pings))
-    rpm = (len(sample_pings) / sample_size) * 60
-    print(rpm)
-    return rpm
+        # math it up and return
+        # print("length sample pings: %s" % len(sample_pings))
+        rpm = (len(sample_pings) / sample_size) * 60
+
+    # prepare response
+    response = {"rpm": rpm, "sample_size": sample_size, "num_pings": len(pings)}
+    print(json.dumps(response))
+    return response

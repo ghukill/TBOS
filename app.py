@@ -4,7 +4,7 @@ TBOS API
 
 import time
 
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 
 from api.models import Bike, Ride
@@ -75,6 +75,22 @@ def create_app():
         Retrieve current bike status
         """
         pass
+
+    @app.route("/api/rm/adjust/<level>", methods=["GET"])
+    def api_rm_adjust_level(level):
+        """
+        Adjust level
+        """
+        response = Bike.adjust_level(int(level))
+        return jsonify(response)
+
+    @app.route("/api/rpm", methods=["GET"])
+    def api_rpm_get():
+        """
+        Get RPM reading
+        """
+        response = Bike.get_rpm()
+        return jsonify(response)
 
     # return Flask app instance
     return app

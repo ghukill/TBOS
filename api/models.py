@@ -53,7 +53,7 @@ class Bike(db.Model):
         return response
 
     @classmethod
-    def get_rpm(self, level):
+    def get_rpm(self):
 
         """
         Get RPM sensor reading
@@ -65,8 +65,8 @@ class Bike(db.Model):
         # execute
         response = pc.execute(
             [
-                ("from embedded.rpm_sensor import get_rpm", None),
-                (f"get_rpm({level})", "float"),
+                ("from embedded.rpm_sensor import *", None),
+                (f"get_rpm()", "json"),
             ]
         )[0]
 

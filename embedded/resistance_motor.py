@@ -31,7 +31,7 @@ in2.low()
 lower_bound = 100
 upper_bound = 3800
 step = int((upper_bound - lower_bound) / 20)
-settled_threshold = 30
+settled_threshold = 20
 
 
 def read_position_sensor(num_reads=5, read_delay=0.05):
