@@ -97,9 +97,7 @@ class PyboardClient:
     def repl_ping(self):
 
         """
-        Send simple ping to repl_ping()
+        Send have repl print "pong"
         """
 
-        return self.execute(
-            [("from embedded.debug import repl_ping", None), ("repl_ping()", "string")]
-        )
+        return self.execute([("print('pong')", "string")])
