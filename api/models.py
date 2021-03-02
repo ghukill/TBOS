@@ -20,6 +20,10 @@ from .exceptions import PybReplCmdError, PybReplRespError
 app = flask.current_app
 
 
+def timestamp_now():
+    return int(time.time())
+
+
 class PyboardClient:
 
     """
@@ -175,7 +179,7 @@ class Ride(db.Model):
 
     ride_uuid = db.Column(db.String, primary_key=True, default=str(uuid.uuid4()))
     name = db.Column(db.Text, nullable=True)
-    date_start = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now())
+    date_start = db.Column(db.DateTime, nullable=False, default=timestamp_now)
     date_end = db.Column(db.DateTime, nullable=True)
     duration = db.Column(db.Float, nullable=False, default=30.0)
 
@@ -202,7 +206,7 @@ class PybJobQueue(db.Model):
     """
 
     job_uuid = db.Column(db.String, primary_key=True, default=str(uuid.uuid4()))
-    timestamp_added = db.Column(db.Integer, nullable=False, default=int(time.time()))
+    timestamp_added = db.Column(db.Integer, nullable=False, default=timestamp_now)
     cmds = db.Column(db.Text, nullable=False)
     resps = db.Column(db.Text, nullable=True)
     resp_idx = db.Column(db.Integer, nullable=True)
