@@ -2,7 +2,7 @@
 TBOS API models
 """
 
-import datetime
+from collections import namedtuple
 import json
 import serial
 import time
@@ -131,19 +131,38 @@ class Bike(db.Model):
     Model to represent the bike / machine
     """
 
+    default_config = {
+        "rm": {
+            "lower_bound": 100,
+            "upper_bound": 3800,
+            "pwm_level": 75,
+            "settled_threshold": 30,
+        },
+        "rpm": {},
+    }
+
     bike_uuid = db.Column(db.String, primary_key=True, default=str(uuid.uuid4()))
     name = db.Column(db.Text, nullable=False)
     config = db.Column(
         db.Text,
         nullable=False,
-        default={
-            "resistance_motor": {"lower_bound": 245, "upper_bound": 610, "voltage": 9},
-            "rpm_sensor": {},
-        },
+        default=default_config,
     )
 
     @classmethod
-    def adjust_level(self, level):
+    def get_debug_bike(cls):
+        """
+        Method to return the debug servo as a Bike instance
+        """
+        return cls.query.filter(cls.name == "Debug Servo").first()
+
+    @property
+    def _config(self):
+        return json.loads(
+            json.dumps(json.loads(self.config)), object_hook=lambda d: namedtuple("BikeConfig", d.keys())(*d.values())
+        )
+
+    def adjust_level(self, level, raise_exceptions=False):
 
         """
         Adjust resistance level
@@ -153,22 +172,29 @@ class Bike(db.Model):
             raise Exception(f"level {level} is not between 0 to 20")
 
         # create and run job
-        response = PybJobQueue.create_and_run_job([(f"goto_level({level})", "json")], resp_idx=0)
+        response = PybJobQueue.create_and_run_job(
+            [
+                (
+                    f"goto_level({level}, {self._config.rm.lower_bound}, {self._config.rm.upper_bound}, {self._config.rm.pwm_level}, {self._config.rm.settled_threshold})",
+                    "json",
+                )
+            ],
+            resp_idx=0,
+            raise_exceptions=raise_exceptions,
+        )
         return response
 
-    @classmethod
-    def get_rpm(self):
+    def get_rpm(self, raise_exceptions=False):
 
         """
         Get RPM sensor reading
         """
 
         # create and run job
-        response = PybJobQueue.create_and_run_job([(f"get_rpm()", "json")], resp_idx=0)
+        response = PybJobQueue.create_and_run_job(
+            [(f"get_rpm()", "json")], resp_idx=0, raise_exceptions=raise_exceptions
+        )
         return response
-
-    def get_status(self):
-        pass
 
 
 class Ride(db.Model):
@@ -279,7 +305,7 @@ class PybJobQueue(db.Model):
             job.execute()
 
     @classmethod
-    def create_and_run_job(cls, cmds, resp_idx=None, timeout=10):
+    def create_and_run_job(cls, cmds, resp_idx=None, timeout=10, raise_exceptions=False):
 
         """
         Method to:
@@ -313,7 +339,7 @@ class PybJobQueue(db.Model):
             if cls.count_running_jobs() == 0:
 
                 # execute job
-                response = job.execute()
+                response = job.execute(raise_exceptions=raise_exceptions)
                 return response
 
             # else, continue to poll

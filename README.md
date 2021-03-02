@@ -38,7 +38,8 @@ flask shell
 
 Create tables:
 ```python
-app.db.create_all()
+from api.utils import recreate_db
+recreate_db()
 ```
 
 #### Run
@@ -78,3 +79,8 @@ Bike.adjust_level(15)
 The GUI is a web application that provides a user interface to TBOS.  The GUI will send user inputs to the API, which in turns stores this information and passes along as necessary to the embedded controller.
 
 GUI Github repository: _ADD LINK HERE_
+
+## TODO
+
+  * update RPM sensor logic to measure time between last two pings, instead of sampling 10s
+  * 

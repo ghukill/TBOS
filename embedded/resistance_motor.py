@@ -26,13 +26,6 @@ ch.pulse_width_percent(0)
 in1.low()
 in2.low()
 
-# motor configurations
-# TODO: update for real motor
-lower_bound = 100
-upper_bound = 3800
-step = int((upper_bound - lower_bound) / 20)
-settled_threshold = 20
-
 
 def read_position_sensor(num_reads=5, read_delay=0.05):
 
@@ -48,16 +41,22 @@ def read_position_sensor(num_reads=5, read_delay=0.05):
     return current
 
 
-def goto_level(level, pwm_level=75, debug=False):
+def goto_level(level, lower_bound, upper_bound, pwm_level, settled_threshold, debug=False):
 
     """
-    :param pwm_level: percentage of input 9v
-        - 9v @ 50% = 5.69v
-
-    TODO:
-        - output loops and avg distance of loop iteration
+    :param pwm_level: percentage of input 9v (9v @ 50% = 5.69v)
     """
 
+    # bail if bounds not set
+    if lower_bound is None or upper_bound is None:
+        msg = "lower or upper bounds not set, bailing"
+        print(msg)
+        return msg
+
+    # determine step
+    step = int((upper_bound - lower_bound) / 20)
+
+    # determine target
     target = lower_bound + (level * step)
 
     prev_diff = 0
@@ -99,9 +98,6 @@ def goto_level(level, pwm_level=75, debug=False):
             time.sleep(0.003)
             in1.low()
             in2.low()
-
-    if debug:
-        print("required loops: %s" % loop_count)
 
     # print/return response
     response = {

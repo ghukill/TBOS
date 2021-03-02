@@ -48,13 +48,11 @@ def get_rpm(sample_size=5, debug=False):
     current_second = int(time.time())
 
     # copy pings to local instance
-    # print("BEFORE length of pings: %s" % len(pings))
     _pings = []
     while len(pings) > 0:
         _pings.append(pings.popleft())
     for ping in _pings:
         pings.append(ping)
-    # print("AFTER length of pings: %s" % len(pings))
 
     # if not pings, return 0
     if len(_pings) == 0:
@@ -66,16 +64,14 @@ def get_rpm(sample_size=5, debug=False):
         while len(_pings) > 0:
             ping = _pings.pop()
             if (current_second - ping) >= sample_size:
-                # print("breaking because ping is too old...")
                 break
             else:
                 sample_pings.append(ping)
 
-        # math it up and return
-        # print("length sample pings: %s" % len(sample_pings))
+        # project to RPMs
         rpm = (len(sample_pings) / sample_size) * 60
 
     # prepare response
-    response = {"rpm": rpm, "sample_size": sample_size, "num_pings": len(pings)}
+    response = {"rpm": rpm, "sample_size": sample_size, "num_sample_pings": len(sample_pings)}
     print(json.dumps(response))
     return response
