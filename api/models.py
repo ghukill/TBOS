@@ -5,12 +5,14 @@ TBOS API models
 import datetime
 import json
 import serial
+import time
 import uuid
 
 import flask
 
 import pyboard
 from rshell.main import is_micropython_usb_device
+from sqlalchemy import asc, desc
 
 from .db import db
 from .exceptions import PybReplCmdError, PybReplRespError
@@ -59,7 +61,7 @@ class PyboardClient:
 
         return self.execute([("print('pong')", "string")], resp_idx=0)
 
-    def execute(self, cmds, resp_idx=None, debug=False):
+    def execute(self, cmds, resp_idx=None, skip_main_import=False, debug=False):
 
         """
         Issue passed command(s), aggregating responses and returning
@@ -73,6 +75,10 @@ class PyboardClient:
 
         # loop through commands, execute, and handle response
         responses = []
+
+        # perform default imports on pyboard for repl session
+        if not skip_main_import:
+            self.pyb.exec("from main import *")
 
         for cmd, response_format in cmds:
             try:
@@ -142,19 +148,8 @@ class Bike(db.Model):
         if not 0 <= level <= 20:
             raise Exception(f"level {level} is not between 0 to 20")
 
-        # init client
-        pc = PyboardClient()
-
-        # execute
-        response = pc.execute(
-            [
-                ("from embedded.resistance_motor import goto_level", None),
-                (f"goto_level({level})", "json"),
-            ],
-            resp_idx=0,
-        )
-
-        # response
+        # create and run job
+        response = PybJobQueue.create_and_run_job([(f"goto_level({level})", "json")], resp_idx=0)
         return response
 
     @classmethod
@@ -164,18 +159,8 @@ class Bike(db.Model):
         Get RPM sensor reading
         """
 
-        # init client
-        pc = PyboardClient()
-
-        # execute
-        response = pc.execute(
-            [
-                ("from embedded.rpm_sensor import *", None),
-                (f"get_rpm()", "json"),
-            ]
-        )[0]
-
-        # response
+        # create and run job
+        response = PybJobQueue.create_and_run_job([(f"get_rpm()", "json")], resp_idx=0)
         return response
 
     def get_status(self):
@@ -207,16 +192,40 @@ class PybJobQueue(db.Model):
             - "running": job is running
             - "success": job completed successfully
             - "failed": job failed
+
+    TODO
+        - implement some form of "execute_now" that will:
+            1) create a new job
+            2) wait for all other "running" jobs to finish
+            3) execute job
+            4) return results
     """
 
     job_uuid = db.Column(db.String, primary_key=True, default=str(uuid.uuid4()))
-    date_start = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now())
+    timestamp_added = db.Column(db.Integer, nullable=False, default=int(time.time()))
     cmds = db.Column(db.Text, nullable=False)
     resps = db.Column(db.Text, nullable=True)
     resp_idx = db.Column(db.Integer, nullable=True)
     status = db.Column(db.String, default="queued", nullable=False)
 
+    @classmethod
+    def count_running_jobs(cls):
+
+        """
+        Return count of running jobs
+        """
+
+        return cls.query.filter(cls.status == "running").count()
+
     def execute(self, raise_exceptions=False):
+
+        """
+        Execute a job
+        """
+
+        # bail if status is not queued
+        if self.status != "queued":
+            raise Exception(f"job status is {self.status}, skipping execution")
 
         # mark as in_progress
         self.status = "running"
@@ -232,13 +241,12 @@ class PybJobQueue(db.Model):
 
             # mark as successfully
             self.status = "success"
-            self.resps = json.dumps(response)  # QUESTION: is this right?  what if response is JSON?
+            self.resps = json.dumps(response)
             app.db.session.commit()
 
             # return response
             return response
 
-        # TODO: better error handling
         except Exception as e:
 
             # mark as failed
@@ -250,3 +258,61 @@ class PybJobQueue(db.Model):
                 raise e
             else:
                 return None
+
+    @classmethod
+    def execute_queued(cls):
+
+        """
+        Method to retrieve and execute all queued jobs
+        """
+
+        # retrieve jobs ordered by timestamp added
+        queued_jobs = cls.query.filter(cls.status == "queued").order_by(asc("timestamp_added")).all()
+
+        # loop through and execute
+        for job in queued_jobs:
+            print(f"executing job: {job.job_uuid}")
+            job.execute()
+
+    @classmethod
+    def create_and_run_job(cls, cmds, resp_idx=None, timeout=10):
+
+        """
+        Method to:
+            1) create new job
+            2) wait for any "running" jobs to complete
+            3) execute job
+            4) return results
+        """
+
+        # create new job
+        job = PybJobQueue(
+            job_uuid=str(uuid.uuid4()),
+            cmds=json.dumps(cmds),
+            resp_idx=resp_idx,
+        )
+        app.db.session.add(job)
+        app.db.session.commit()
+
+        # poll for other jobs to be complete
+        count = 0
+        while True:
+
+            # if timeout, mark job as failed
+            if count > timeout:
+                job.status = "failed"
+                app.db.session.add(job)
+                app.db.session.commit()
+                raise Exception("timeout reached for creating and running new job")  # TODO: custom exception
+
+            # check if no jobs running
+            if cls.count_running_jobs() == 0:
+
+                # execute job
+                response = job.execute()
+                return response
+
+            # else, continue to poll
+            else:
+                time.sleep(1)
+                count += 1
