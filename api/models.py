@@ -148,13 +148,17 @@ class Bike(db.Model):
         nullable=False,
         default=default_config,
     )
+    is_current = db.Column(db.Boolean, default=0, nullable=False)
+
+    def __repr__(self):
+        return f"<Bike, {self.name}>"
 
     @classmethod
-    def get_debug_bike(cls):
+    def current(cls):
         """
-        Method to return the debug servo as a Bike instance
+        Class Method to return the debug servo as a Bike instance
         """
-        return cls.query.filter(cls.name == "Debug Servo").first()
+        return cls.query.filter(cls.is_current == True).one_or_none()
 
     @property
     def _config(self):

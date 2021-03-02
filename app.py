@@ -82,7 +82,7 @@ def create_app():
         """
         Adjust level
         """
-        response = Bike.adjust_level(int(level))
+        response = Bike.current().adjust_level(int(level))
         return jsonify(response)
 
     @app.route("/api/rpm", methods=["GET"])
@@ -90,7 +90,7 @@ def create_app():
         """
         Get RPM reading
         """
-        response = Bike.get_rpm()
+        response = Bike.current().get_rpm()
         return jsonify(response)
 
     # return Flask app instance

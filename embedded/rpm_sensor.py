@@ -54,22 +54,17 @@ def get_rpm(sample_size=5, debug=False):
     for ping in _pings:
         pings.append(ping)
 
-    # if not pings, return 0
-    if len(_pings) == 0:
-        rpm = 0.0
+    # reduce to sample size
+    sample_pings = []
+    while len(_pings) > 0:
+        ping = _pings.pop()
+        if (current_second - ping) >= sample_size:
+            break
+        else:
+            sample_pings.append(ping)
 
-    else:
-        # reduce to sample size
-        sample_pings = []
-        while len(_pings) > 0:
-            ping = _pings.pop()
-            if (current_second - ping) >= sample_size:
-                break
-            else:
-                sample_pings.append(ping)
-
-        # project to RPMs
-        rpm = (len(sample_pings) / sample_size) * 60
+    # project to RPMs
+    rpm = (len(sample_pings) / sample_size) * 60
 
     # prepare response
     response = {"rpm": rpm, "sample_size": sample_size, "num_sample_pings": len(sample_pings)}
