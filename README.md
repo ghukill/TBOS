@@ -6,18 +6,18 @@
 
 ## Data Flow
 ```
-GUI --> Flask API --> embedded pyboard
+GUI <--> Flask API <--> embedded Pyboard controller
 ```
 
 ## API
 
-TBOS API is a flask app providing HTTP endpoints.  Most all routes expect/return JSON.  The API also provides the primary mechanism for sending commands to the embedded pyboard controller.
+TBOS API is a Flask app providing HTTP endpoints.  Most all routes expect/return JSON.  The API is the primary mechanism for sending commands to the embedded Pyboard controller.
 
-Database is SQLlite, stored in `db/tbos.db`
+Persisted data is stored in a SQLlite database @ `./db/tbos.db`.
 
 ### Install
 #### Create Virtual Environment
-```python
+```bash
 # create virtual environment
 python3.7 -m venv venv
 
@@ -28,31 +28,53 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-#### Create Database
-```python
-# from flask shell
-app.db.create_all()
-app.db.session.commit()
+#### Create Database via Flask shell
+
+Start flask shell:
+```bash
+source venv/bin/activate
+flask shell
 ```
 
+Create tables:
+```python
+app.db.create_all()
+```
+
+#### Run
+
+Run on `localhost:5000`:
+```bash
+source venv/bin/activate
+flask run
+```
+
+Bind to `0.0.0.0` so accessible on network:
+```bash
+source venv/bin/activate
+flask run --host 0.0.0.0
+```
 
 ### API Routes
 
-### TBOS API shell
-Start it:
+### TBOS API Flask shell
+
+Start Flask shell:
 ```bash
-# source virtual environment
 source venv/bin/activate
-# fire it up
 flask shell
 ```
 
 Usage
 ```python
-# TODO...
+# send level adjustment to embedded controller
+from api.models import Bike
+Bike.adjust_level(15)
 ```
 
 
 ## GUI
 
 The GUI is a web application that provides a user interface to TBOS.  The GUI will send user inputs to the API, which in turns stores this information and passes along as necessary to the embedded controller.
+
+GUI Github repository: _ADD LINK HERE_
