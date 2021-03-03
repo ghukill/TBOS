@@ -56,6 +56,10 @@ source venv/bin/activate
 flask run --host 0.0.0.0
 ```
 
+#### Virtual Bike
+
+By default, `recreate_db()` will create three bikes, where the default bike is a "virtual" bike that is not actually connected to an external controller.  This bike will allow the API to return results *as if* it were connected, with simulated delays.
+
 ### API Routes
 
 ### TBOS API Flask shell
