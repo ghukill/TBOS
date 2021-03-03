@@ -132,6 +132,7 @@ class Bike(db.Model):
     """
 
     default_config = {
+        "virtual": False,
         "rm": {
             "lower_bound": 100,
             "upper_bound": 3800,
@@ -166,6 +167,10 @@ class Bike(db.Model):
             json.dumps(json.loads(self.config)), object_hook=lambda d: namedtuple("BikeConfig", d.keys())(*d.values())
         )
 
+    @property
+    def is_virtual(self):
+        return self._config.virtual
+
     def adjust_level(self, level, raise_exceptions=False):
 
         """
@@ -176,16 +181,27 @@ class Bike(db.Model):
             raise Exception(f"level {level} is not between 0 to 20")
 
         # create and run job
-        response = PybJobQueue.create_and_run_job(
-            [
-                (
-                    f"goto_level({level}, {self._config.rm.lower_bound}, {self._config.rm.upper_bound}, {self._config.rm.pwm_level}, {self._config.rm.settled_threshold})",
-                    "json",
-                )
-            ],
-            resp_idx=0,
-            raise_exceptions=raise_exceptions,
-        )
+        if self.is_virtual:
+            time.sleep(2)
+            response = {
+                "loop_count": 10,
+                "level": level,
+                "current": 999,
+                "target": 999,
+            }
+        else:
+            response = PybJobQueue.create_and_run_job(
+                [
+                    (
+                        f"goto_level({level}, {self._config.rm.lower_bound}, {self._config.rm.upper_bound}, {self._config.rm.pwm_level}, {self._config.rm.settled_threshold})",
+                        "json",
+                    )
+                ],
+                resp_idx=0,
+                raise_exceptions=raise_exceptions,
+            )
+
+        # return
         return response
 
     def get_rpm(self, raise_exceptions=False):
@@ -195,9 +211,15 @@ class Bike(db.Model):
         """
 
         # create and run job
-        response = PybJobQueue.create_and_run_job(
-            [(f"get_rpm()", "json")], resp_idx=0, raise_exceptions=raise_exceptions
-        )
+        if self.is_virtual:
+            time.sleep(5)
+            response = {"rpm": 60, "sample_size": 5, "num_sample_pings": 5}
+        else:
+            response = PybJobQueue.create_and_run_job(
+                [(f"get_rpm()", "json")], resp_idx=0, raise_exceptions=raise_exceptions
+            )
+
+        # return response
         return response
 
 
