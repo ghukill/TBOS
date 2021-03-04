@@ -4,6 +4,7 @@ TBOS API models
 
 from collections import namedtuple
 import json
+import random
 import serial
 import time
 import uuid
@@ -183,11 +184,12 @@ class Bike(db.Model):
         # create and run job
         if self.is_virtual:
             time.sleep(2)
+            target = int(((self._config.rm.upper_bound - self._config.rm.lower_bound) / 20) * level)
             response = {
                 "loop_count": 10,
                 "level": level,
-                "current": 999,
-                "target": 999,
+                "current": target + random.randint(-15, 15),
+                "target": target,
             }
         else:
             response = PybJobQueue.create_and_run_job(
@@ -212,8 +214,8 @@ class Bike(db.Model):
 
         # create and run job
         if self.is_virtual:
-            time.sleep(5)
-            response = {"rpm": 60, "sample_size": 5, "num_sample_pings": 5}
+            time.sleep(random.randint(1, 3))
+            response = {"rpm": 59.88304, "us_to_rpm_ratio": 5044.834, "us_diffs": [139592, 162508]}
         else:
             response = PybJobQueue.create_and_run_job(
                 [(f"get_rpm()", "json")], resp_idx=0, raise_exceptions=raise_exceptions

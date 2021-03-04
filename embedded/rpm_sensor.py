@@ -19,18 +19,24 @@ micropython.alloc_emergency_exception_buf(100)
 
 # pins
 ping_led = pyb.LED(4)
+_blink_led = False
 
 # bookkeeping
-pings = deque((), 120)
+pings_us = deque((), 4)
+pings = deque((), 2)
 
 
 def ping_iq_on():
-    ping_led.on()
-    pings.append(int(time.time()))
+    pings_us.append(time.ticks_us())
+    pings.append(time.ticks_ms())
+    if _blink_led:
+        ping_led.on()
 
 
 def ping_iq_off():
-    ping_led.off()
+    pings_us.append(time.ticks_us())
+    if _blink_led:
+        ping_led.off()
 
 
 mgr = Manager(
@@ -42,38 +48,45 @@ mgr = Manager(
 )
 
 
-def get_rpm(sample_size=4, debug=False):
+def get_rpm(timeout=5, blink_led=False):
 
     """
     Calculate RPMs by counting pings
     """
 
-    # delay for sample size duration to allow manager interrupts
-    pyb.delay(sample_size * 1000)
+    # update blink flag
+    _blink_led = blink_led
 
-    # after delay, get second to move backwards from
-    current_second = int(time.time())
-
-    # copy pings to local instance
-    _pings = []
-    while len(pings) > 0:
-        _pings.append(pings.popleft())
-    for ping in _pings:
-        pings.append(ping)
-
-    # reduce to sample size
-    sample_pings = []
-    while len(_pings) > 0:
-        ping = _pings.pop()
-        if (current_second - ping) >= sample_size:
+    t0 = time.time()
+    while len(pings_us) < 4:
+        if time.time() - t0 > timeout:
             break
         else:
-            sample_pings.append(ping)
+            continue
 
-    # project to RPMs
-    rpm = (len(sample_pings) / sample_size) * 60
+    if len(pings_us) >= 4:
+
+        # us_records
+        us_diffs = []
+        for x in range(0, 2):
+            us_on = pings_us.popleft()
+            us_off = pings_us.popleft()
+            us_diffs.append(us_off - us_on)
+
+        # rpm from microseconds
+        ms_1 = pings.popleft()
+        ms_2 = pings.popleft()
+        rpm = 60 / ((ms_2 / 1000) - (ms_1 / 1000))
+
+        # sensor time to rpm ratio
+        us_to_rpm_ratio = sum(us_diffs) / rpm
+
+    else:
+        us_diffs = []
+        rpm = 0
+        us_to_rpm_ratio = 0
 
     # prepare response
-    response = {"rpm": rpm, "sample_size": sample_size, "num_pings": len(pings), "num_sample_pings": len(sample_pings)}
+    response = {"rpm": rpm, "us_diffs": us_diffs, "us_to_rpm_ratio": us_to_rpm_ratio}
     print(json.dumps(response))
     return response
