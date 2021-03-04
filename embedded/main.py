@@ -9,9 +9,3 @@ import pyb
 from embedded.debug import repl_ping
 from embedded.resistance_motor import read_position_sensor, goto_level
 from embedded.rpm_sensor import get_rpm
-
-
-def get_status():
-    status = {"rpm": 60, "rm": {"level": 10}}
-    print(json.dumps(status))
-    return status

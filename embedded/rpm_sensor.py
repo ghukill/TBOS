@@ -17,25 +17,32 @@ from .inputs import Manager, Digital
 # debugging
 micropython.alloc_emergency_exception_buf(100)
 
+# pins
+ping_led = pyb.LED(4)
+
 # bookkeeping
 pings = deque((), 120)
 
 
-# setup interrupt manager
-def ping_iq():
+def ping_iq_on():
+    ping_led.on()
     pings.append(int(time.time()))
+
+
+def ping_iq_off():
+    ping_led.off()
 
 
 mgr = Manager(
     [
-        Digital("X8: hallsensor", hl_func=ping_iq),
+        Digital("X8: hallsensor", hl_func=ping_iq_on, lh_func=ping_iq_off),
     ],
     timer_num=1,
     poll_freq=480,
 )
 
 
-def get_rpm(sample_size=5, debug=False):
+def get_rpm(sample_size=4, debug=False):
 
     """
     Calculate RPMs by counting pings
@@ -67,6 +74,6 @@ def get_rpm(sample_size=5, debug=False):
     rpm = (len(sample_pings) / sample_size) * 60
 
     # prepare response
-    response = {"rpm": rpm, "sample_size": sample_size, "num_sample_pings": len(sample_pings)}
+    response = {"rpm": rpm, "sample_size": sample_size, "num_pings": len(pings), "num_sample_pings": len(sample_pings)}
     print(json.dumps(response))
     return response
