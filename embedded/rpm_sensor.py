@@ -1,8 +1,5 @@
 """
 RPM sensor
-
-TODO
-    - possible improvement, record time diff between last two pings (stored in 2nd queue)
 """
 
 from collections import deque

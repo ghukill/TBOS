@@ -167,7 +167,7 @@ def create_app():
         # serialize and return
         return jsonify(BikeSchema(many=True).dump(Bike.query.all()))
 
-    @app.route("/api/bike/set_current/<bike_uuid>", methods=["POST"])
+    @app.route("/api/bike/set_current/<bike_uuid>", methods=["GET"])
     def bike_set_current(bike_uuid):
 
         """
