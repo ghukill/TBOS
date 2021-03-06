@@ -201,11 +201,33 @@ def create_app():
     def api_rm_adjust_level(level):
 
         """
-        Adjust bike resistance motor level
+        Adjust bike resistance motor level to explicit level
         """
 
         response = Bike.current().adjust_level(int(level))
         return jsonify(response)
+
+    @app.route("/api/bike/rm/adjust/decrease", methods=["GET"])
+    def api_rm_adjust_level_decrease():
+
+        """
+        Adjust bike resistance motor level - decrease by 1
+        """
+
+        print('decreasing level')
+        response = Bike.current().adjust_level_down()
+        return jsonify(response)
+
+    @app.route("/api/bike/rm/adjust/increase", methods=["GET"])
+    def api_rm_adjust_level_increase():
+
+        """
+        Adjust bike resistance motor level - increase by 1
+        """
+
+        print('increasing level')
+        response = Bike.current().adjust_level_up()
+        return jsonify(response)    
 
     @app.route("/api/bike/rpm", methods=["GET"])
     def api_rpm_get():

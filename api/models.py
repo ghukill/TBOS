@@ -146,6 +146,8 @@ class Bike(db.Model):
         "rpm": {},
     }
 
+    _level = None
+
     bike_uuid = db.Column(db.String, primary_key=True, default=str(uuid.uuid4()))
     name = db.Column(db.Text, nullable=False)
     config = db.Column(
@@ -201,6 +203,26 @@ class Bike(db.Model):
     def is_virtual(self):
         return self._config.virtual
 
+    @property
+    def level(self):
+
+        """
+        Property to return level, and retrieve if None
+        """
+
+        if self._level is None:
+            print("level is not set, retrieving")
+            if self.is_virtual:
+                level = 10
+            else:
+                status = self.get_status()
+                level = status['rm']['level']
+            print(f"derived level: {level}")
+            self._level = level
+
+        return self._level
+    
+    
     def get_status(self, raise_exceptions=False):
 
         """
@@ -225,7 +247,10 @@ class Bike(db.Model):
                 raise_exceptions=raise_exceptions,
             )
 
-        # return
+        # update level
+        self._level = response['rm']['level']
+        
+        # return        
         return response
 
     def adjust_level(self, level, raise_exceptions=False):
@@ -259,9 +284,54 @@ class Bike(db.Model):
                 raise_exceptions=raise_exceptions,
             )
 
+        # set level
+        self._level = level
+        
+        # return        
+        return response
+
+    def adjust_level_down(self, raise_exceptions=False):
+
+        """
+        Decrease level by 1
+        """
+
+        # get current level
+        level = self.level
+        new_level = level - 1
+        if new_level < 1:
+            new_level = 1
+
+        # adjust level
+        response = self.adjust_level(new_level, raise_exceptions=raise_exceptions)
+
+        # update level
+        self._level = new_level
+
         # return
         return response
 
+    def adjust_level_up(self, raise_exceptions=False):
+
+        """
+        Increase level by 1
+        """
+
+        # get current level
+        level = self.level
+        new_level = level + 1
+        if new_level > 20:
+            new_level = 20
+
+        # adjust level
+        response = self.adjust_level(new_level, raise_exceptions=raise_exceptions)
+
+        # update level
+        self._level = new_level
+
+        # return
+        return response
+    
     def get_rpm(self, raise_exceptions=False):
 
         """
