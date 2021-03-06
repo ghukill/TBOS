@@ -201,6 +201,33 @@ class Bike(db.Model):
     def is_virtual(self):
         return self._config.virtual
 
+    def get_status(self, raise_exceptions=False):
+
+        """
+        Get status report from embedded controller
+        """
+
+        # create and run job
+        if self.is_virtual:
+            level = 10
+            current = int(((self._config.rm.upper_bound - self._config.rm.lower_bound) / 20) * level)
+            rm = {"level": level, "current": current}
+            response = {"rm": rm, "rpm": self.get_rpm()}
+        else:
+            response = PybJobQueue.create_and_run_job(
+                [
+                    (
+                        f"status({self._config.rm.lower_bound}, {self._config.rm.upper_bound})",
+                        "json",
+                    )
+                ],
+                resp_idx=0,
+                raise_exceptions=raise_exceptions,
+            )
+
+        # return
+        return response
+
     def adjust_level(self, level, raise_exceptions=False):
 
         """

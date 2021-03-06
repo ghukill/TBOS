@@ -126,7 +126,4 @@ def rm_status(lower_bound, upper_bound):
     step = determine_step(lower_bound, upper_bound)
     level = int(current / step)
 
-    return {
-        "level": level,
-        "current": current,
-    }
+    return {"level": level, "current": current}

@@ -3,6 +3,7 @@ TBOS: main embedded driver
 """
 
 import json
+import time
 
 import pyb
 
@@ -17,4 +18,9 @@ def status(lower_bound, upper_bound):
     Return full sensor status
     """
 
-    return {"rm": rm_status(lower_bound, upper_bound), "rpm": get_rpm()}
+    t0 = time.time()
+    rm_reading = rm_status(lower_bound, upper_bound)
+    rpm_reading = get_rpm(print_results=False)
+    response = {"rm": rm_reading, "rpm": rpm_reading, "elapsed": time.time() - t0}
+    print(json.dumps(response))
+    return response

@@ -45,7 +45,7 @@ mgr = Manager(
 )
 
 
-def get_rpm(timeout=5, blink_led=False):
+def get_rpm(timeout=5, blink_led=False, print_results=True):
 
     """
     Calculate RPMs by counting pings
@@ -85,5 +85,6 @@ def get_rpm(timeout=5, blink_led=False):
 
     # prepare response
     response = {"rpm": rpm, "us_diffs": us_diffs, "us_to_rpm_ratio": us_to_rpm_ratio}
-    print(json.dumps(response))
+    if print_results:
+        print(json.dumps(response))
     return response

@@ -184,7 +184,13 @@ def create_app():
 
     @app.route("/api/bike/status", methods=["GET"])
     def api_status():
-        pass
+
+        """
+        Get full status from embedded controller
+        """
+
+        response = Bike.current().get_status()
+        return jsonify(response)
 
     @app.route("/api/bike/rm/adjust/<level>", methods=["GET"])
     def api_rm_adjust_level(level):
