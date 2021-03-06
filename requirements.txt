@@ -4,6 +4,7 @@ flask-shell-ipython==0.4.1
 flask-sqlalchemy==2.4.4
 ipython==7.19.0
 jedi==0.17.2
+marshmallow-sqlalchemy==0.24.2
 # pandas==1.2.0
 pyserial==3.5
 requests==2.25.1

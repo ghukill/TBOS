@@ -62,6 +62,8 @@ By default, `recreate_db()` will create three bikes, where the default bike is a
 
 ### API Routes
 
+See Postman collection: TODO FILE HERE
+
 ### TBOS API Flask shell
 
 Start Flask shell:

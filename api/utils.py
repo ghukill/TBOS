@@ -5,8 +5,25 @@ TBOS API utils
 import json
 
 import flask
+from flask import jsonify
 
 app = flask.current_app
+
+
+def parse_query_payload(request):
+
+    """
+    Helper function to parse query payload
+    """
+
+    try:
+        query_payload = request.json
+    except:
+        raise app.InvalidUsage(
+            f"this {request.method} request must contain valid JSON as body of request", status_code=400
+        )
+
+    return query_payload
 
 
 def recreate_db():

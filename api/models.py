@@ -3,13 +3,16 @@ TBOS API models
 """
 
 from collections import namedtuple
+import datetime
 import json
 import random
 import serial
 import time
+import traceback
 import uuid
 
 import flask
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 import pyboard
 from rshell.main import is_micropython_usb_device
@@ -64,7 +67,7 @@ class PyboardClient:
         Send have repl print "pong"
         """
 
-        return self.execute([("print('pong')", "string")], resp_idx=0)
+        return self.execute([("from main import repl_ping", None), ("repl_ping()", "string")], resp_idx=0)
 
     def execute(self, cmds, resp_idx=None, skip_main_import=False, debug=False):
 
@@ -155,6 +158,32 @@ class Bike(db.Model):
     def __repr__(self):
         return f"<Bike, {self.name}>"
 
+    def set_as_current(self):
+
+        """
+        Method to set bike as current
+        """
+
+        # if already current, do nothing
+        if self.is_current:
+            return True
+
+        # set all to False
+        try:
+            app.db.session.execute(
+                """
+                update bike set is_current=0
+                """
+            )
+
+            # set self to current and commit
+            self.is_current = True
+            app.db.session.commit()
+            return True
+        except Exception as e:
+            app.db.session.rollback()
+            raise e
+
     @classmethod
     def current(cls):
         """
@@ -233,9 +262,18 @@ class Ride(db.Model):
 
     ride_uuid = db.Column(db.String, primary_key=True, default=str(uuid.uuid4()))
     name = db.Column(db.Text, nullable=True)
-    date_start = db.Column(db.DateTime, nullable=False, default=timestamp_now)
-    date_end = db.Column(db.DateTime, nullable=True)
+    date_start = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now)
+    date_end = db.Column(db.DateTime, nullable=True, default=None)
     duration = db.Column(db.Float, nullable=False, default=30.0)
+    completed = db.Column(db.Float, nullable=False, default=0.0)
+
+    def save(self):
+        try:
+            app.db.session.add(self)
+            app.db.session.commit()
+        except Exception as e:
+            app.db.session.rollback()
+            raise e
 
 
 class PybJobQueue(db.Model):
@@ -250,13 +288,6 @@ class PybJobQueue(db.Model):
             - "running": job is running
             - "success": job completed successfully
             - "failed": job failed
-
-    TODO
-        - implement some form of "execute_now" that will:
-            1) create a new job
-            2) wait for all other "running" jobs to finish
-            3) execute job
-            4) return results
     """
 
     job_uuid = db.Column(db.String, primary_key=True, default=str(uuid.uuid4()))
@@ -374,3 +405,28 @@ class PybJobQueue(db.Model):
             else:
                 time.sleep(1)
                 count += 1
+
+
+###############################################
+# SCHEMAS
+###############################################
+class BikeSchema(SQLAlchemyAutoSchema):
+    # TODO: parse config JSON to dictionary
+    class Meta:
+        model = Bike
+        include_relationships = True
+        load_instance = True
+
+
+class RideSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Ride
+        include_relationships = True
+        load_instance = True
+
+
+class PybJobQueueSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Ride
+        include_relationships = True
+        load_instance = True
