@@ -1,11 +1,5 @@
 """
-Code for embedded TBOS functionality:
-    - resistance motor control
-    - speed sensor
-    - power management
-
-NOTE:
-    - possible to use interrupt movement via constant read: https://github.com/alanmitchell/micropython-inputs
+Resistance Motor
 """
 
 import json
@@ -41,6 +35,15 @@ def read_position_sensor(num_reads=5, read_delay=0.05):
     return current
 
 
+def determine_step(lower_bound, upper_bound, step_num=20):
+
+    """
+    Based on upper and lower bounds, determine level sweep
+    """
+
+    return int((upper_bound - lower_bound) / step_num)
+
+
 def goto_level(level, lower_bound, upper_bound, pwm_level, settled_threshold, debug=False):
 
     """
@@ -54,7 +57,7 @@ def goto_level(level, lower_bound, upper_bound, pwm_level, settled_threshold, de
         return msg
 
     # determine step
-    step = int((upper_bound - lower_bound) / 20)
+    step = determine_step(lower_bound, upper_bound)
 
     # determine target
     target = lower_bound + (level * step)
@@ -108,3 +111,22 @@ def goto_level(level, lower_bound, upper_bound, pwm_level, settled_threshold, de
     }
     print(json.dumps(response))
     return response
+
+
+def rm_status(lower_bound, upper_bound):
+
+    """
+    Function to return status
+    """
+
+    # get current reading
+    current = read_position_sensor()
+
+    # calculate level
+    step = determine_step(lower_bound, upper_bound)
+    level = int(current / step)
+
+    return {
+        "level": level,
+        "current": current,
+    }
