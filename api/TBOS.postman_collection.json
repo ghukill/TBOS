@@ -256,7 +256,7 @@
 			"response": []
 		},
 		{
-			"name": "api - adjust level",
+			"name": "api - adjust level - explicit",
 			"request": {
 				"method": "GET",
 				"header": [],
@@ -273,6 +273,52 @@
 						"rm",
 						"adjust",
 						"10"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "api - adjust level - increase",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/api/bike/rm/adjust/increase",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"bike",
+						"rm",
+						"adjust",
+						"increase"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "api - adjust level - decrease",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/api/bike/rm/adjust/decrease",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"bike",
+						"rm",
+						"adjust",
+						"decrease"
 					]
 				}
 			},

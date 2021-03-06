@@ -214,7 +214,7 @@ def create_app():
         Adjust bike resistance motor level - decrease by 1
         """
 
-        print('decreasing level')
+        print("decreasing level")
         response = Bike.current().adjust_level_down()
         return jsonify(response)
 
@@ -225,9 +225,9 @@ def create_app():
         Adjust bike resistance motor level - increase by 1
         """
 
-        print('increasing level')
+        print("increasing level")
         response = Bike.current().adjust_level_up()
-        return jsonify(response)    
+        return jsonify(response)
 
     @app.route("/api/bike/rpm", methods=["GET"])
     def api_rpm_get():
