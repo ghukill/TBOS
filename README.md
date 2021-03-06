@@ -42,6 +42,31 @@ from api.utils import recreate_db
 recreate_db()
 ```
 
+#### Setup systemctl service
+
+Create systemctl service file @ `/lib/systemd/system/tbos.service`:
+```
+[Unit]
+Description=TBOS API
+After=multi-user.target
+
+[Service]
+Type=idle
+Environment="PYTHONPATH=."
+WorkingDirectory=/home/pi/dev/projects/TBOS
+ExecStart=/home/pi/dev/projects/TBOS/venv/bin/flask run
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Reload daemon and enable service
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable tbos.service
+sudo systemctl start tbos.service
+```
+
 #### Run
 
 Run on `localhost:5000`:
