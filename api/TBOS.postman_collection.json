@@ -25,38 +25,204 @@
 			"response": []
 		},
 		{
-			"name": "api - ping",
+			"name": "api - debug - ping",
 			"request": {
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5000/",
+					"raw": "http://localhost:5000/debug/ping",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "5000",
 					"path": [
-						""
+						"debug",
+						"ping"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "api - embedded ping",
+			"name": "api - debug - embedded ping",
 			"request": {
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5000/",
+					"raw": "http://localhost:5000/debug/embedded/ping",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "5000",
 					"path": [
-						""
+						"debug",
+						"embedded",
+						"ping"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "api - debug - error",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/debug/error",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"debug",
+						"error"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "api - rides",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:5000/api/rides",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"rides"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "api - ride - new",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"goober3\",\n    \"duration\": 45.0\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/ride/new",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"ride",
+						"new"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "api - retrieve ride",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:5000/api/ride/38c2d464-8462-4af6-bbb1-a6a018f65c45",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"ride",
+						"38c2d464-8462-4af6-bbb1-a6a018f65c45"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "api - bikes",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:5000/api/bikes",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"bikes"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "api - bike - set current",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:5000/api/bike/set_current/6e063089-438e-4a9b-a369-9db7bcf9a502",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"bike",
+						"set_current",
+						"6e063089-438e-4a9b-a369-9db7bcf9a502"
 					]
 				}
 			},
@@ -68,7 +234,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5000/api/rm/adjust/6",
+					"raw": "http://localhost:5000/api/bike/rm/adjust/5",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -76,9 +242,10 @@
 					"port": "5000",
 					"path": [
 						"api",
+						"bike",
 						"rm",
 						"adjust",
-						"6"
+						"5"
 					]
 				}
 			},
@@ -90,7 +257,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5000/api/rpm",
+					"raw": "http://localhost:5000/api/bike/rpm",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -98,6 +265,7 @@
 					"port": "5000",
 					"path": [
 						"api",
+						"bike",
 						"rpm"
 					]
 				}

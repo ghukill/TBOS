@@ -180,15 +180,10 @@ def create_app():
 
     @app.route("/api/bike/new", methods=["POST"])
     def bike_new():
-        # TODO
         pass
 
     @app.route("/api/bike/status", methods=["GET"])
     def api_status():
-
-        """
-        Retrieve current bike status
-        """
         pass
 
     @app.route("/api/bike/rm/adjust/<level>", methods=["GET"])
