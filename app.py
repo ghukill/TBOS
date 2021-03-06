@@ -161,7 +161,7 @@ def create_app():
     def bikes():
 
         """
-        Rerieve all bikes
+        Retrieve all bikes
         """
 
         # serialize and return
@@ -171,7 +171,7 @@ def create_app():
     def bike_set_current(bike_uuid):
 
         """
-        Set current bike in db
+        Set current bike
         """
 
         bike = Bike.query.get(bike_uuid)
@@ -180,6 +180,11 @@ def create_app():
 
     @app.route("/api/bike/new", methods=["POST"])
     def bike_new():
+
+        """
+        Create new bike
+        """
+
         pass
 
     @app.route("/api/bike/status", methods=["GET"])

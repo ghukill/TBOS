@@ -240,7 +240,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://localhost:5000/api/bike/set_current/6e063089-438e-4a9b-a369-9db7bcf9a502",
+					"raw": "http://localhost:5000/api/bike/status",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -249,8 +249,7 @@
 					"path": [
 						"api",
 						"bike",
-						"set_current",
-						"6e063089-438e-4a9b-a369-9db7bcf9a502"
+						"status"
 					]
 				}
 			},
@@ -262,7 +261,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5000/api/bike/rm/adjust/5",
+					"raw": "http://localhost:5000/api/bike/rm/adjust/10",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -273,7 +272,7 @@
 						"bike",
 						"rm",
 						"adjust",
-						"5"
+						"10"
 					]
 				}
 			},
