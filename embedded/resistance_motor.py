@@ -98,7 +98,7 @@ def goto_level(level, lower_bound, upper_bound, pwm_level, settled_threshold, de
                 in1.low()
                 in2.high()
 
-            time.sleep(0.003)  # NOTE: this may be too short for bike motor?
+            time.sleep(0.01)  # NOTE: ideally this would be parameterized for bike as well
             in1.low()
             in2.low()
 
