@@ -216,13 +216,12 @@ class Bike(db.Model):
                 level = 10
             else:
                 status = self.get_status()
-                level = status['rm']['level']
+                level = status["rm"]["level"]
             print(f"derived level: {level}")
             self._level = level
 
         return self._level
-    
-    
+
     def get_status(self, raise_exceptions=False):
 
         """
@@ -248,9 +247,9 @@ class Bike(db.Model):
             )
 
         # update level
-        self._level = response['rm']['level']
-        
-        # return        
+        self._level = response["rm"]["level"]
+
+        # return
         return response
 
     def adjust_level(self, level, raise_exceptions=False):
@@ -286,8 +285,8 @@ class Bike(db.Model):
 
         # set level
         self._level = level
-        
-        # return        
+
+        # return
         return response
 
     def adjust_level_down(self, raise_exceptions=False):
@@ -331,7 +330,7 @@ class Bike(db.Model):
 
         # return
         return response
-    
+
     def get_rpm(self, raise_exceptions=False):
 
         """
@@ -385,6 +384,7 @@ class PybJobQueue(db.Model):
             - "running": job is running
             - "success": job completed successfully
             - "failed": job failed
+            - "cancelled": job was cancelled
     """
 
     job_uuid = db.Column(db.String, primary_key=True, default=str(uuid.uuid4()))
@@ -503,12 +503,26 @@ class PybJobQueue(db.Model):
                 time.sleep(1)
                 count += 1
 
+    @classmethod
+    def stop_all_jobs(cls):
+
+        """
+        Method to cancel all running jobs
+        """
+
+        all_jobs = cls.query.filter(cls.status.in_(["queued", "running"])).all()
+        for job in all_jobs:
+            job.status = "cancelled"
+            app.db.session.add(job)
+            app.db.session.commit()
+        return len(all_jobs)
+
 
 ###############################################
 # SCHEMAS
+# TODO: parser for JSON columns stored as strings
 ###############################################
 class BikeSchema(SQLAlchemyAutoSchema):
-    # TODO: parse config JSON to dictionary
     class Meta:
         model = Bike
         include_relationships = True
@@ -524,6 +538,6 @@ class RideSchema(SQLAlchemyAutoSchema):
 
 class PybJobQueueSchema(SQLAlchemyAutoSchema):
     class Meta:
-        model = Ride
+        model = PybJobQueue
         include_relationships = True
         load_instance = True

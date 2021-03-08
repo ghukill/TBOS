@@ -9,7 +9,7 @@ import uuid
 
 from flask import Flask, request, jsonify
 
-from api.models import Bike, BikeSchema, PyboardClient, PybJobQueueSchema, Ride, RideSchema
+from api.models import Bike, BikeSchema, PyboardClient, PybJobQueue, PybJobQueueSchema, Ride, RideSchema
 from api.utils import parse_query_payload
 
 from api.db import db
@@ -18,10 +18,15 @@ from api.db import db
 def create_app():
 
     app = Flask(__name__)
+
+    # setup db
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db/tbos.db"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.init_app(app)
     app.db = db
+
+    # cancel any running jobs
+    # PybJobQueue.stop_all_jobs()
 
     # API Error Handling
     class InvalidUsage(Exception):
@@ -238,6 +243,15 @@ def create_app():
 
         response = Bike.current().get_rpm()
         return jsonify(response)
+
+    @app.route("/api/jobs", methods=["GET"])
+    def api_jobs_retrieve():
+
+        """
+        Return all jobs
+        """
+
+        return jsonify(PybJobQueueSchema(many=True).dump(PybJobQueue.query.all()))
 
     # return Flask app instance
     return app
