@@ -41,7 +41,7 @@ def determine_step(lower_bound, upper_bound, step_num=20):
     Based on upper and lower bounds, determine level sweep
     """
 
-    return int((upper_bound - lower_bound) / step_num)
+    return round(((upper_bound - lower_bound) - 1) / step_num)
 
 
 def goto_level(level, lower_bound, upper_bound, pwm_level, settled_threshold, debug=False):
@@ -60,7 +60,7 @@ def goto_level(level, lower_bound, upper_bound, pwm_level, settled_threshold, de
     step = determine_step(lower_bound, upper_bound)
 
     # determine target
-    target = lower_bound + (level * step)
+    target = upper_bound - ((level - 1) * step)
 
     prev_diff = 0
     loop_count = 0
@@ -98,7 +98,7 @@ def goto_level(level, lower_bound, upper_bound, pwm_level, settled_threshold, de
                 in1.low()
                 in2.high()
 
-            time.sleep(0.003)
+            time.sleep(0.003)  # NOTE: this may be too short for bike motor?
             in1.low()
             in2.low()
 
@@ -124,6 +124,6 @@ def rm_status(lower_bound, upper_bound):
 
     # calculate level
     step = determine_step(lower_bound, upper_bound)
-    level = int(current / step)
+    level = round((upper_bound - current) / step) + 1
 
     return {"level": level, "current": current}

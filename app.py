@@ -25,9 +25,6 @@ def create_app():
     db.init_app(app)
     app.db = db
 
-    # cancel any running jobs
-    # PybJobQueue.stop_all_jobs()
-
     # API Error Handling
     class InvalidUsage(Exception):
         """
