@@ -79,7 +79,7 @@ def create_app():
         """
         return f"TBOS"
 
-    @app.route("/debug/ping", methods=["GET", "POST", "PATCH", "DELETE"])
+    @app.route("/api/debug/ping", methods=["GET", "POST", "PATCH", "DELETE"])
     def debug_ping():
 
         """
@@ -87,7 +87,7 @@ def create_app():
         """
         return f"{request.method} @ pong"
 
-    @app.route("/debug/embedded/ping", methods=["GET"])
+    @app.route("/api/debug/embedded/ping", methods=["GET"])
     def debug_embedded_ping():
         """
         Fire repl_ping from embedded controller
@@ -96,7 +96,7 @@ def create_app():
         resp = pyb.repl_ping()
         return resp
 
-    @app.route("/debug/error", methods=["GET", "POST", "PATCH", "DELETE"])
+    @app.route("/api/debug/error", methods=["GET", "POST", "PATCH", "DELETE"])
     def debug_error():
         """
         Raise error
@@ -108,6 +108,7 @@ def create_app():
     ######################################################################
     @app.route("/api/rides", methods=["GET"])
     def rides():
+
         """
         Retrieve all Rides
         """
@@ -155,6 +156,21 @@ def create_app():
         ride = Ride.query.get(ride_uuid)
         if ride is None:
             raise app.InvalidUsage(f"ride {ride_uuid} was not found", status_code=404)
+
+        # serialize and return
+        return jsonify(RideSchema().dump(ride))
+
+    @app.route("/api/ride/latest", methods=["GET"])
+    def ride_retrieve_latest():
+
+        """
+        Retrieve latest Ride
+        """
+
+        # retrieve a Ride
+        ride = Ride.get_latest()
+        if ride is None:
+            raise app.InvalidUsage(f"no rides found, cannot return latest", status_code=404)
 
         # serialize and return
         return jsonify(RideSchema().dump(ride))

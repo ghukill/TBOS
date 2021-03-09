@@ -12,7 +12,9 @@ import traceback
 import uuid
 
 import flask
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from marshmallow.decorators import pre_dump, pre_load
+from marshmallow import fields
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 
 import pyboard
 from rshell.main import is_micropython_usb_device
@@ -151,7 +153,7 @@ class Bike(db.Model):
     bike_uuid = db.Column(db.String, primary_key=True, default=str(uuid.uuid4()))
     name = db.Column(db.Text, nullable=False)
     config = db.Column(
-        db.Text,
+        db.JSON,
         nullable=False,
         default=default_config,
     )
@@ -196,7 +198,7 @@ class Bike(db.Model):
     @property
     def _config(self):
         return json.loads(
-            json.dumps(json.loads(self.config)), object_hook=lambda d: namedtuple("BikeConfig", d.keys())(*d.values())
+            json.dumps(self.config), object_hook=lambda d: namedtuple("BikeConfig", d.keys())(*d.values())
         )
 
     @property
@@ -370,6 +372,15 @@ class Ride(db.Model):
         except Exception as e:
             app.db.session.rollback()
             raise e
+
+    @classmethod
+    def get_latest(cls):
+
+        """
+        Method to return latest ride
+        """
+
+        return cls.query.order_by(desc(cls.date_start)).first()
 
 
 class PybJobQueue(db.Model):
