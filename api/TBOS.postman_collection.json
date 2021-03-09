@@ -30,13 +30,14 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5000/debug/ping",
+					"raw": "http://localhost:5000/api/debug/ping",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "5000",
 					"path": [
+						"api",
 						"debug",
 						"ping"
 					]
@@ -50,13 +51,14 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5000/debug/embedded/ping",
+					"raw": "http://localhost:5000/api/debug/embedded/ping",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "5000",
 					"path": [
+						"api",
 						"debug",
 						"embedded",
 						"ping"
@@ -71,13 +73,14 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5000/debug/error",
+					"raw": "http://localhost:5000/api/debug/error",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "5000",
 					"path": [
+						"api",
 						"debug",
 						"error"
 					]
@@ -124,7 +127,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"name\": \"goober3\",\n    \"duration\": 45.0\n}",
+					"raw": "{\n    \"name\": \"goobertronic\",\n    \"duration\": 45.0\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -169,6 +172,33 @@
 						"api",
 						"ride",
 						"38c2d464-8462-4af6-bbb1-a6a018f65c45"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "api - ride - latest",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:5000/api/ride/latest",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"ride",
+						"latest"
 					]
 				}
 			},
@@ -256,7 +286,7 @@
 			"response": []
 		},
 		{
-			"name": "api - adjust level - explicit",
+			"name": "api - bike - adjust level - explicit",
 			"request": {
 				"method": "GET",
 				"header": [],
@@ -279,7 +309,7 @@
 			"response": []
 		},
 		{
-			"name": "api - adjust level - increase",
+			"name": "api - bike - adjust level - increase",
 			"request": {
 				"method": "GET",
 				"header": [],
@@ -302,7 +332,7 @@
 			"response": []
 		},
 		{
-			"name": "api - adjust level - decrease",
+			"name": "api - bike - adjust level - decrease",
 			"request": {
 				"method": "GET",
 				"header": [],
@@ -325,7 +355,7 @@
 			"response": []
 		},
 		{
-			"name": "api - get RPM",
+			"name": "api - bike - get RPM",
 			"request": {
 				"method": "GET",
 				"header": [],
@@ -340,6 +370,26 @@
 						"api",
 						"bike",
 						"rpm"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "api - jobs",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/api/jobs",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"jobs"
 					]
 				}
 			},
