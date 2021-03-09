@@ -400,8 +400,8 @@ class PybJobQueue(db.Model):
 
     job_uuid = db.Column(db.String, primary_key=True, default=str(uuid.uuid4()))
     timestamp_added = db.Column(db.Integer, nullable=False, default=timestamp_now)
-    cmds = db.Column(db.Text, nullable=False)
-    resps = db.Column(db.Text, nullable=True)
+    cmds = db.Column(db.JSON, nullable=False)
+    resps = db.Column(db.JSON, nullable=True)
     resp_idx = db.Column(db.Integer, nullable=True)
     status = db.Column(db.String, default="queued", nullable=False)
 
@@ -434,11 +434,11 @@ class PybJobQueue(db.Model):
         try:
 
             # execute
-            response = pc.execute(json.loads(self.cmds), resp_idx=self.resp_idx)
+            response = pc.execute(self.cmds, resp_idx=self.resp_idx)
 
             # mark as successfully
             self.status = "success"
-            self.resps = json.dumps(response)
+            self.resps = response
             app.db.session.commit()
 
             # return response
@@ -485,7 +485,7 @@ class PybJobQueue(db.Model):
         # create new job
         job = PybJobQueue(
             job_uuid=str(uuid.uuid4()),
-            cmds=json.dumps(cmds),
+            cmds=cmds,
             resp_idx=resp_idx,
         )
         app.db.session.add(job)
