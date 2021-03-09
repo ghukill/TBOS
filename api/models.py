@@ -267,7 +267,8 @@ class Bike(db.Model):
         # create and run job
         if self.is_virtual:
             time.sleep(2)
-            target = int(((self._config.rm.upper_bound - self._config.rm.lower_bound) / 20) * level)
+            step = round(((self._config.rm.upper_bound - self._config.rm.lower_bound) - 1) / 20)
+            target = self._config.rm.upper_bound - ((level - 1) * step)
             response = {
                 "loop_count": 10,
                 "level": level,
