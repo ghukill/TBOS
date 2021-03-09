@@ -45,7 +45,7 @@ mgr = Manager(
 )
 
 
-def get_rpm(timeout=5, blink_led=False, print_results=True):
+def get_rpm(timeout=3.5, blink_led=False, print_results=True):
 
     """
     Calculate RPMs by counting pings
