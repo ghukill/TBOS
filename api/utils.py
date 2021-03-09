@@ -64,10 +64,11 @@ def recreate_db():
                 "upper_bound": 3800,
                 "pwm_level": 75,
                 "settled_threshold": 30,
+                "sweep_delay": 0.006,
             },
             "rpm": {},
         },
-        is_current=True,
+        is_current=False,
     )
     app.db.session.add(debug_servo)
     debug_servo = Bike(
@@ -80,10 +81,11 @@ def recreate_db():
                 "upper_bound": 3800,
                 "pwm_level": 75,
                 "settled_threshold": 30,
+                "sweep_delay": 0.006,
             },
             "rpm": {},
         },
-        is_current=False,
+        is_current=True,
     )
     app.db.session.add(debug_servo)
     lf_c1 = Bike(
@@ -92,10 +94,11 @@ def recreate_db():
         config={
             "virtual": False,
             "rm": {
-                "lower_bound": 245,
-                "upper_bound": 610,
-                "pwm_level": 75,
-                "settled_threshold": 30,
+                "lower_bound": 988,
+                "upper_bound": 3773,
+                "pwm_level": 100,
+                "settled_threshold": 10,
+                "sweep_delay": 0.05,
             },
             "rpm": {},
         },

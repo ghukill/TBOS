@@ -138,12 +138,13 @@ class Bike(db.Model):
     """
 
     default_config = {
-        "virtual": False,
+        "virtual": True,
         "rm": {
             "lower_bound": 100,
             "upper_bound": 3800,
             "pwm_level": 75,
             "settled_threshold": 30,
+            "sweep_delay": 0.006,
         },
         "rpm": {},
     }
@@ -277,7 +278,7 @@ class Bike(db.Model):
             response = PybJobQueue.create_and_run_job(
                 [
                     (
-                        f"goto_level({level}, {self._config.rm.lower_bound}, {self._config.rm.upper_bound}, {self._config.rm.pwm_level}, {self._config.rm.settled_threshold})",
+                        f"goto_level({level}, {self._config.rm.lower_bound}, {self._config.rm.upper_bound}, {self._config.rm.pwm_level}, {self._config.rm.sweep_delay}, {self._config.rm.settled_threshold})",
                         "json",
                     )
                 ],
