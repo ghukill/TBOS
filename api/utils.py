@@ -68,7 +68,7 @@ def recreate_db():
             },
             "rpm": {},
         },
-        is_current=False,
+        is_current=True,
     )
     app.db.session.add(debug_servo)
     debug_servo = Bike(
@@ -85,7 +85,7 @@ def recreate_db():
             },
             "rpm": {},
         },
-        is_current=True,
+        is_current=False,
     )
     app.db.session.add(debug_servo)
     lf_c1 = Bike(

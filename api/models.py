@@ -159,6 +159,7 @@ class Bike(db.Model):
         default=default_config,
     )
     is_current = db.Column(db.Boolean, default=0, nullable=False)
+    last_status = db.Column(db.JSON, nullable=True)
 
     def __repr__(self):
         return f"<Bike, {self.name}>"
@@ -215,15 +216,25 @@ class Bike(db.Model):
 
         if self._level is None:
             print("level is not set, retrieving")
-            if self.is_virtual:
-                level = 10
-            else:
-                status = self.get_status()
-                level = status["rm"]["level"]
+            status = self.get_status()
+            level = status["rm"]["level"]
             print(f"derived level: {level}")
             self._level = level
 
         return self._level
+
+    def _generate_virtual_status(self, level=10):
+
+        """
+        Method to generate current status for virtual bike
+        """
+
+        current = int(((self._config.rm.upper_bound - self._config.rm.lower_bound) / 20) * level)
+        rm = {"level": level, "current": current}
+        virtual_status = {"rm": rm, "rpm": self.get_rpm()}
+        self.last_status = virtual_status
+        app.db.session.add(self)
+        app.db.session.commit()
 
     def get_status(self, raise_exceptions=False):
 
@@ -233,10 +244,12 @@ class Bike(db.Model):
 
         # create and run job
         if self.is_virtual:
-            level = 10
-            current = int(((self._config.rm.upper_bound - self._config.rm.lower_bound) / 20) * level)
-            rm = {"level": level, "current": current}
-            response = {"rm": rm, "rpm": self.get_rpm()}
+            time.sleep(1)  # mimic read
+            app.db.session.expire_all()  # expire to refresh
+            if self.last_status is None:
+                response = self._generate_virtual_status()
+            else:
+                response = self.last_status
         else:
             response = PybJobQueue.create_and_run_job(
                 [
@@ -252,6 +265,11 @@ class Bike(db.Model):
         # update level
         self._level = response["rm"]["level"]
 
+        # save to db
+        self.last_status = response
+        app.db.session.add(self)
+        app.db.session.commit()
+
         # return
         return response
 
@@ -266,15 +284,7 @@ class Bike(db.Model):
 
         # create and run job
         if self.is_virtual:
-            time.sleep(2)
-            step = round(((self._config.rm.upper_bound - self._config.rm.lower_bound) - 1) / 20)
-            target = self._config.rm.upper_bound - ((level - 1) * step)
-            response = {
-                "loop_count": 10,
-                "level": level,
-                "current": target + random.randint(-15, 15),
-                "target": target,
-            }
+            self._generate_virtual_status(level)
         else:
             response = PybJobQueue.create_and_run_job(
                 [
@@ -287,11 +297,11 @@ class Bike(db.Model):
                 raise_exceptions=raise_exceptions,
             )
 
-        # set level
-        self._level = level
+        # get status
+        status = self.get_status()
 
         # return
-        return response
+        return status
 
     def adjust_level_down(self, raise_exceptions=False):
 
