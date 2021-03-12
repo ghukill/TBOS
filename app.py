@@ -175,6 +175,31 @@ def create_app():
         # serialize and return
         return jsonify(RideSchema().dump(ride))
 
+    @app.route("/api/ride/<ride_uuid>", methods=["PATCH"])
+    def ride_retrieve_udpate(ride_uuid):
+
+        """
+        Update a single Ride via payload
+        """
+
+        # parse payload
+        payload = parse_query_payload(request)
+
+        # retrieve a Ride
+        ride = Ride.query.get(ride_uuid)
+        if ride is None:
+            raise app.InvalidUsage(f"ride {ride_uuid} was not found", status_code=404)
+
+        # for key in payload, upload Ride
+        for key, value in payload.items():
+            setattr(ride, key, value)
+
+        # save ride
+        ride.save()
+
+        # serialize and return
+        return jsonify(RideSchema().dump(ride))
+
     @app.route("/api/bikes", methods=["GET"])
     def bikes():
 
