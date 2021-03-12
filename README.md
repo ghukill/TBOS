@@ -113,5 +113,5 @@ GUI Github repository: _ADD LINK HERE_
 
 ## TODO
 
-  * update RPM sensor logic to measure time between last two pings, instead of sampling 10s
-  * 
+  * look into the idea of a heartbeat
+    * NOTE: rpm is the slowest link; where RPMs are low, it's slower, 60+ RPMs can be sub-second

@@ -11,12 +11,10 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5000/",
-					"protocol": "http",
+					"raw": "{{api_root}}/",
 					"host": [
-						"localhost"
+						"{{api_root}}"
 					],
-					"port": "5000",
 					"path": [
 						""
 					]
@@ -100,12 +98,10 @@
 					}
 				],
 				"url": {
-					"raw": "http://localhost:5000/api/rides",
-					"protocol": "http",
+					"raw": "{{api_root}}/api/rides",
 					"host": [
-						"localhost"
+						"{{api_root}}"
 					],
-					"port": "5000",
 					"path": [
 						"api",
 						"rides"
@@ -135,12 +131,10 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/api/ride/new",
-					"protocol": "http",
+					"raw": "{{api_root}}/api/ride/new",
 					"host": [
-						"localhost"
+						"{{api_root}}"
 					],
-					"port": "5000",
 					"path": [
 						"api",
 						"ride",
@@ -162,16 +156,43 @@
 					}
 				],
 				"url": {
-					"raw": "http://localhost:5000/api/ride/38c2d464-8462-4af6-bbb1-a6a018f65c45",
-					"protocol": "http",
+					"raw": "{{api_root}}/api/ride/b07532cd-5c6c-41dc-9a81-7d26ad23548d",
 					"host": [
-						"localhost"
+						"{{api_root}}"
 					],
-					"port": "5000",
 					"path": [
 						"api",
 						"ride",
-						"38c2d464-8462-4af6-bbb1-a6a018f65c45"
+						"b07532cd-5c6c-41dc-9a81-7d26ad23548d"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "api - update ride",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\":\"goobertronic - UPDATE\",\n    \"completed\":12.1\n}"
+				},
+				"url": {
+					"raw": "{{api_root}}/api/ride/b07532cd-5c6c-41dc-9a81-7d26ad23548d",
+					"host": [
+						"{{api_root}}"
+					],
+					"path": [
+						"api",
+						"ride",
+						"b07532cd-5c6c-41dc-9a81-7d26ad23548d"
 					]
 				}
 			},
@@ -216,12 +237,10 @@
 					}
 				],
 				"url": {
-					"raw": "http://localhost:5000/api/bikes",
-					"protocol": "http",
+					"raw": "{{api_root}}/api/bikes",
 					"host": [
-						"localhost"
+						"{{api_root}}"
 					],
-					"port": "5000",
 					"path": [
 						"api",
 						"bikes"
@@ -242,17 +261,15 @@
 					}
 				],
 				"url": {
-					"raw": "http://localhost:5000/api/bike/set_current/6e063089-438e-4a9b-a369-9db7bcf9a502",
-					"protocol": "http",
+					"raw": "{{api_root}}/api/bike/set_current/8933f238-5ebc-43a7-acc8-2d7272a5e81d",
 					"host": [
-						"localhost"
+						"{{api_root}}"
 					],
-					"port": "5000",
 					"path": [
 						"api",
 						"bike",
 						"set_current",
-						"6e063089-438e-4a9b-a369-9db7bcf9a502"
+						"8933f238-5ebc-43a7-acc8-2d7272a5e81d"
 					]
 				}
 			},
@@ -270,12 +287,10 @@
 					}
 				],
 				"url": {
-					"raw": "http://localhost:5000/api/bike/status",
-					"protocol": "http",
+					"raw": "{{api_root}}/api/bike/status",
 					"host": [
-						"localhost"
+						"{{api_root}}"
 					],
-					"port": "5000",
 					"path": [
 						"api",
 						"bike",
@@ -381,12 +396,10 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5000/api/jobs",
-					"protocol": "http",
+					"raw": "{{api_root}}/api/jobs",
 					"host": [
-						"localhost"
+						"{{api_root}}"
 					],
-					"port": "5000",
 					"path": [
 						"api",
 						"jobs"
