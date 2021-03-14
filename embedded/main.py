@@ -13,7 +13,6 @@ from embedded.resistance_motor import read_position_sensor, goto_level, rm_statu
 from embedded.rpm_sensor import get_rpm
 
 # init LCD screen
-# NOTE: this may not work, as any command will wipe the screen
 lcd = HD44780()
 lcd.PINS = ["Y1", "Y2", "Y3", "Y4", "Y5", "Y6"]
 
