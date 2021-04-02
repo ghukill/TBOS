@@ -98,7 +98,7 @@ def recreate_db():
                 "upper_bound": 3773,
                 "pwm_level": 100,
                 "settled_threshold": 10,
-                "sweep_delay": 0.05,
+                "sweep_delay": 0.04,
             },
             "rpm": {},
         },
