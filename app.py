@@ -9,7 +9,7 @@ import uuid
 
 from flask import Flask, request, jsonify
 
-from api.models import Bike, BikeSchema, PyboardClient, PybJobQueue, PybJobQueueSchema, Ride, RideSchema
+from api.models import Bike, BikeSchema, LCD, PyboardClient, PybJobQueue, PybJobQueueSchema, Ride, RideSchema
 from api.utils import parse_query_payload
 
 from api.db import db
@@ -67,6 +67,17 @@ def create_app():
     @app.errorhandler(Exception)
     def generic_exception(e):
         return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
+
+    # splash
+    with app.app_context():
+        try:
+            LCD.write("TBOS", "initializing...")
+            time.sleep(2)
+            LCD.write("TBOS", "ready!")
+        except Exception as e:
+            print("ERROR WITH SPLASH")
+            print(str(e))
+            print(traceback.format_exc())
 
     ######################################################################
     # Debug Routes

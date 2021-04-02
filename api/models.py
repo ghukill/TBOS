@@ -270,6 +270,12 @@ class Bike(db.Model):
         app.db.session.add(self)
         app.db.session.commit()
 
+        # print to LCD
+        LCD.write(
+            f"l:{response['rm']['level']} v:{response['rm']['current']}",
+            f"rpm:{response['rpm']['rpm']}",
+        )
+
         # return
         return response
 
@@ -539,6 +545,25 @@ class PybJobQueue(db.Model):
             app.db.session.add(job)
             app.db.session.commit()
         return len(all_jobs)
+
+
+class LCD:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def write(self, l1, l2, raise_exceptions=False):
+        response = PybJobQueue.create_and_run_job(
+            [
+                (
+                    "lcd.init(); pyb.delay(100)",
+                    None,
+                ),
+                (f"lcd.write(['{l1}', '{l2}'], clear=True)", None),
+            ],
+            raise_exceptions=raise_exceptions,
+        )
+        return response
 
 
 ###############################################

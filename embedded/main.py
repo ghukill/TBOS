@@ -28,17 +28,18 @@ def status(lower_bound, upper_bound):
     rpm_reading = get_rpm(print_results=False)
     response = {"rm": rm_reading, "rpm": rpm_reading, "elapsed": time.time() - t0}
 
-    # write to LCD
-    try:
-        lcd.init()
-        l1 = "lev:%s, cur:%s" % (str(response["rm"]["level"]), str(response["rm"]["current"]))
-        l2 = "rpm:%s" % (str(response["rpm"]["rpm"]))
-        lcd.write(
-            [l1, l2],
-            clear=True,
-        )
-    except Exception as e:
-        lcd.write(["ERROR", str(e)])
+    # # write to LCD
+    # try:
+    #     lcd.init()
+    #     pyb.delay(100)
+    #     l1 = "l:%s v:%s" % (str(response["rm"]["level"]), str(response["rm"]["current"]))
+    #     l2 = "rpm:%s" % (str(response["rpm"]["rpm"]))
+    #     lcd.write(
+    #         [l1, l2],
+    #         clear=True,
+    #     )
+    # except Exception as e:
+    #     lcd.write(["ERROR", None], clear=True)
 
     # print and return
     print(json.dumps(response))
