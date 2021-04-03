@@ -71,11 +71,9 @@ def create_app():
     # splash
     with app.app_context():
         try:
-            LCD.write("TBOS", "initializing...")
-            time.sleep(2)
-            LCD.write("TBOS", "ready!")
+            LCD.write("Welcome to TBOS", "status:ready")
         except Exception as e:
-            print("ERROR WITH SPLASH")
+            print("LCD ERROR")
             print(str(e))
             print(traceback.format_exc())
 
@@ -117,6 +115,21 @@ def create_app():
     ######################################################################
     # API Routes
     ######################################################################
+    @app.route("/api/heartbeat", methods=["GET"])
+    def hearbeat():
+
+        # init heartbeat
+        response = {}
+
+        # get bike status
+        response.update(Bike.current().get_status())
+
+        # get ride status
+        response.update(Ride.current().get_status())
+
+        # return
+        return jsonify(response)
+
     @app.route("/api/rides", methods=["GET"])
     def rides():
 
@@ -125,7 +138,7 @@ def create_app():
         """
 
         # serialize and return
-        return jsonify(RideSchema(many=True).dump(Ride.query.all()))
+        return jsonify([ride.serialize() for ride in Ride.query.all()])
 
     @app.route("/api/ride/new", methods=["POST"])
     def ride_new():
@@ -153,8 +166,11 @@ def create_app():
         # create
         ride.save()
 
+        # set as current
+        ride.set_as_current()
+
         # serialize and return
-        return jsonify(RideSchema().dump(ride))
+        return jsonify(ride.serialize())
 
     @app.route("/api/ride/<ride_uuid>", methods=["GET"])
     def ride_retrieve(ride_uuid):
@@ -168,26 +184,54 @@ def create_app():
         if ride is None:
             raise app.InvalidUsage(f"ride {ride_uuid} was not found", status_code=404)
 
+        # set as current
+        ride.set_as_current()
+
         # serialize and return
-        return jsonify(RideSchema().dump(ride))
+        return jsonify(ride.serialize())
 
-    @app.route("/api/ride/latest", methods=["GET"])
-    def ride_retrieve_latest():
+    @app.route("/api/ride/current", methods=["GET"])
+    def ride_retrieve_current():
 
         """
-        Retrieve latest Ride
+        Retrieve current Ride
         """
 
-        # retrieve a Ride
+        # retrieve current Ride
         ride = Ride.get_latest()
         if ride is None:
-            raise app.InvalidUsage(f"no rides found, cannot return latest", status_code=404)
+            raise app.InvalidUsage(f"no rides found, cannot return current", status_code=404)
 
         # serialize and return
-        return jsonify(RideSchema().dump(ride))
+        return jsonify(ride.serialize())
+
+    @app.route("/api/ride/current", methods=["PATCH"])
+    def ride_current_update():
+
+        """
+        Update a single Ride via payload
+        """
+
+        # parse payload
+        payload = parse_query_payload(request)
+
+        # retrieve a Ride
+        ride = Ride.current()
+        if ride is None:
+            raise app.InvalidUsage(f"no rides found, cannot update", status_code=404)
+
+        # for key in payload, upload Ride
+        for key, value in payload.items():
+            setattr(ride, key, value)
+
+        # save ride
+        ride.save()
+
+        # serialize and return
+        return jsonify(ride.serialize())
 
     @app.route("/api/ride/<ride_uuid>", methods=["PATCH"])
-    def ride_retrieve_udpate(ride_uuid):
+    def ride_explicit_update(ride_uuid):
 
         """
         Update a single Ride via payload
@@ -209,7 +253,7 @@ def create_app():
         ride.save()
 
         # serialize and return
-        return jsonify(RideSchema().dump(ride))
+        return jsonify(ride.serialize())
 
     @app.route("/api/bikes", methods=["GET"])
     def bikes():

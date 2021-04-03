@@ -382,6 +382,55 @@ class Ride(db.Model):
     date_end = db.Column(db.DateTime, nullable=True, default=None)
     duration = db.Column(db.Float, nullable=False, default=30.0)
     completed = db.Column(db.Float, nullable=False, default=0.0)
+    is_current = db.Column(db.Boolean, default=0, nullable=False)
+
+    def set_as_current(self):
+
+        """
+        Method to set bike as current
+        """
+
+        # if already current, do nothing
+        if self.is_current:
+            return True
+
+        # set all to False
+        try:
+            app.db.session.execute(
+                """
+                update ride set is_current=0
+                """
+            )
+
+            # set self to current and commit
+            self.is_current = True
+            app.db.session.commit()
+            return True
+        except Exception as e:
+            app.db.session.rollback()
+            raise e
+
+    @classmethod
+    def current(cls):
+        """
+        Class Method to return current Ride
+        """
+        return cls.query.filter(cls.is_current == True).one_or_none()
+
+    def serialize(self):
+
+        """
+        Custom serialization for Ride
+        """
+
+        # init base as serialized data from db
+        ser = RideSchema().dump(self)
+
+        # add remaining node
+        ser["remaining"] = self.duration - self.completed
+
+        # return
+        return ser
 
     def save(self):
         try:
@@ -395,10 +444,39 @@ class Ride(db.Model):
     def get_latest(cls):
 
         """
-        Method to return latest ride
+        Method to return latest ride and set as current
         """
 
-        return cls.query.order_by(desc(cls.date_start)).first()
+        # get ride
+        ride = cls.query.order_by(desc(cls.date_start)).first()
+
+        # set as current
+        ride.set_as_current()
+
+        return ride
+
+    @classmethod
+    def get_current(cls):
+
+        """
+        Method to return latest ride and set as current
+        """
+
+        # get ride
+        ride = cls.query.order_by(desc(cls.date_start)).first()
+
+        # set as current
+        ride.set_as_current()
+
+        return ride
+
+    def get_status(self):
+
+        """
+        Return Ride status
+        """
+
+        return {"ride": self.serialize()}
 
 
 class PybJobQueue(db.Model):
@@ -564,6 +642,13 @@ class LCD:
             raise_exceptions=raise_exceptions,
         )
         return response
+
+    @classmethod
+    def splash(cls):
+
+        """
+        Flask launch splash screen
+        """
 
 
 ###############################################
