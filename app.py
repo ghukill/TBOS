@@ -122,10 +122,16 @@ def create_app():
         response = {}
 
         # get bike status
-        response.update(Bike.current().get_status())
+        response.update(Bike.current().get_status(to_lcd=False))
 
         # get ride status
         response.update(Ride.current().get_status())
+
+        # lcd report
+        LCD.write(
+            f"""c:{response['ride']['completed']}, r:{response['ride']['remaining']}""",
+            f"""l:{response['rm']['level']}, rpm:{int(response['rpm']['rpm'])}""",
+        )
 
         # return
         return jsonify(response)

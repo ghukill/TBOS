@@ -236,10 +236,10 @@ class Bike(db.Model):
         app.db.session.add(self)
         app.db.session.commit()
 
-    def get_status(self, raise_exceptions=False):
+    def get_status(self, to_lcd=True, raise_exceptions=False):
 
         """
-        Get status report from embedded controller
+        Get status report from embedded controller about Bike
         """
 
         # create and run job
@@ -271,10 +271,11 @@ class Bike(db.Model):
         app.db.session.commit()
 
         # print to LCD
-        LCD.write(
-            f"l:{response['rm']['level']} v:{response['rm']['current']}",
-            f"rpm:{response['rpm']['rpm']}",
-        )
+        if to_lcd:
+            LCD.write(
+                f"l:{response['rm']['level']} v:{response['rm']['current']}",
+                f"rpm:{response['rpm']['rpm']}",
+            )
 
         # return
         return response
