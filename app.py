@@ -8,6 +8,7 @@ import traceback
 import uuid
 
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 from api.models import Bike, BikeSchema, LCD, PyboardClient, PybJobQueue, PybJobQueueSchema, Ride, RideSchema
 from api.utils import parse_query_payload
@@ -24,6 +25,9 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.init_app(app)
     app.db = db
+
+    # wrap in CORS
+    CORS(app)
 
     # API Error Handling
     class InvalidUsage(Exception):
