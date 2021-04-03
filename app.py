@@ -122,22 +122,35 @@ def create_app():
     @app.route("/api/heartbeat", methods=["GET"])
     def hearbeat():
 
+        t1 = time.time()
+
         # init heartbeat
         response = {}
 
         # get bike status
+        t0 = time.time()
         response.update(Bike.current().get_status(to_lcd=False))
+        print(f"bike status elapsed: {time.time()-t0}")
 
         # get ride status
-        response.update(Ride.current().get_status())
+        t0 = time.time()
+        ride = Ride.current()
+        if ride is None:
+            ride = Ride.get_free_ride()
+        response.update(ride.get_status())
+        print(f"ride status elapsed: {time.time() - t0}")
 
         # lcd report
+        # TODO: perform after flask response
+        t0 = time.time()
         LCD.write(
-            f"""c:{response['ride']['completed']}, r:{response['ride']['remaining']}""",
+            f"""c:{response["ride"]["completed"]}, r:{response["ride"]["remaining"]}""",
             f"""l:{response['rm']['level']}, rpm:{int(response['rpm']['rpm'])}""",
         )
+        print(f"LCD write elapsed: {time.time() - t0}")
 
         # return
+        print(f"heartbeat elapsed: {time.time()-t1}")
         return jsonify(response)
 
     @app.route("/api/rides", methods=["GET"])

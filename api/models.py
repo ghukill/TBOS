@@ -38,6 +38,9 @@ class PyboardClient:
 
     def __init__(self):
 
+        # DEBUG
+        t0 = time.time()
+
         # automatically detect port
         self.pyboard_port = self.detect_pyboard_port()
 
@@ -47,6 +50,9 @@ class PyboardClient:
         except:
             print("WARNING: cannot access pyboard")
             self.pyb = None
+
+        # DEBUG
+        print(f"time to init PyboardClient: {time.time()-t0}")
 
     def detect_pyboard_port(self):
         """
@@ -212,6 +218,8 @@ class Bike(db.Model):
 
         """
         Property to return level, and retrieve if None
+
+        NOTE: required for incremental increase/decrease, but room for improvement where front-end remembers
         """
 
         if self._level is None:
@@ -241,6 +249,8 @@ class Bike(db.Model):
         """
         Get status report from embedded controller about Bike
         """
+
+        t0 = time.time()
 
         # create and run job
         if self.is_virtual:
@@ -278,6 +288,7 @@ class Bike(db.Model):
             )
 
         # return
+        print(f"get status elapsed: {time.time()-t0}")
         return response
 
     def adjust_level(self, level, raise_exceptions=False):
@@ -290,7 +301,9 @@ class Bike(db.Model):
             raise Exception(f"level {level} is not between 0 to 20")
 
         # create and run job
+        t0 = time.time()
         if self.is_virtual:
+            time.sleep(1)
             self._generate_virtual_status(level)
         else:
             response = PybJobQueue.create_and_run_job(
@@ -303,6 +316,7 @@ class Bike(db.Model):
                 resp_idx=0,
                 raise_exceptions=raise_exceptions,
             )
+        print(f"level adjust elapsed: {time.time()-t0}")
 
         # get status
         status = self.get_status()
@@ -360,7 +374,7 @@ class Bike(db.Model):
 
         # create and run job
         if self.is_virtual:
-            time.sleep(random.randint(1, 3))
+            time.sleep(1)
             response = {"rpm": 59.88304, "us_to_rpm_ratio": 5044.834, "us_diffs": [139592, 162508]}
         else:
             response = PybJobQueue.create_and_run_job(
@@ -478,6 +492,32 @@ class Ride(db.Model):
         """
 
         return {"ride": self.serialize()}
+
+    @classmethod
+    def get_free_ride(cls):
+
+        """
+        Return transient, "free" Ride instance
+        """
+
+        # mint UUID
+        free_ride_uuid = str(uuid.uuid4())
+
+        # create and save
+        free_ride = cls(
+            name=f"Free Ride {free_ride_uuid}",
+            ride_uuid=free_ride_uuid,
+            date_start=datetime.datetime.now(),
+            duration=0.0,
+            completed=0.0,
+        )
+        free_ride.save()
+
+        # set as current
+        free_ride.set_as_current()
+
+        # return
+        return free_ride
 
 
 class PybJobQueue(db.Model):
