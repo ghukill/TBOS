@@ -253,9 +253,9 @@ class Bike(db.Model):
 
         # create and run job
         if self.is_virtual:
+            time.sleep(1)  # mimic read
             app.db.session.expire_all()  # expire to refresh
             if self.last_status is None:
-                time.sleep(1)  # mimic read
                 response = self._generate_virtual_status()
             else:
                 response = self.last_status

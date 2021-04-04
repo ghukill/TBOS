@@ -81,6 +81,12 @@ source venv/bin/activate
 flask run --host 0.0.0.0
 ```
 
+#### Logging
+
+```bash
+journalctl -u tbos.service
+```
+
 #### Virtual Bike
 
 By default, `recreate_db()` will create three bikes, where the default bike is a "virtual" bike that is not actually connected to an external controller.  This bike will allow the API to return results *as if* it were connected, with simulated delays.
@@ -103,15 +109,3 @@ Usage
 from api.models import Bike
 Bike.adjust_level(15)
 ```
-
-
-## GUI
-
-The GUI is a web application that provides a user interface to TBOS.  The GUI will send user inputs to the API, which in turns stores this information and passes along as necessary to the embedded controller.
-
-GUI Github repository: _ADD LINK HERE_
-
-## TODO
-
-  * look into the idea of a heartbeat
-    * NOTE: rpm is the slowest link; where RPMs are low, it's slower, 60+ RPMs can be sub-second
