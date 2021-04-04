@@ -217,18 +217,17 @@ class Bike(db.Model):
     def level(self):
 
         """
-        Property to return level, and retrieve if None
-
-        NOTE: required for incremental increase/decrease, but room for improvement where front-end remembers
+        Property to return level, and retrieve from last status if none
         """
 
         if self._level is None:
-            print("level is not set, retrieving")
-            status = self.get_status()
-            level = status["rm"]["level"]
-            print(f"derived level: {level}")
-            self._level = level
-
+            if self.last_status is not None:
+                print("level is not set, using last stored")
+                self._level = self.last_status["rm"]["level"]
+            else:
+                print("previous status not stored, retrieving")
+                status = self.get_status()
+                self._level = status["rm"]["level"]
         return self._level
 
     def _generate_virtual_status(self, level=10):
@@ -236,13 +235,13 @@ class Bike(db.Model):
         """
         Method to generate current status for virtual bike
         """
-
         current = int(((self._config.rm.upper_bound - self._config.rm.lower_bound) / 20) * level)
         rm = {"level": level, "current": current}
         virtual_status = {"rm": rm, "rpm": self.get_rpm()}
         self.last_status = virtual_status
         app.db.session.add(self)
         app.db.session.commit()
+        return virtual_status
 
     def get_status(self, to_lcd=True, raise_exceptions=False):
 
@@ -254,9 +253,9 @@ class Bike(db.Model):
 
         # create and run job
         if self.is_virtual:
-            time.sleep(1)  # mimic read
             app.db.session.expire_all()  # expire to refresh
             if self.last_status is None:
+                time.sleep(1)  # mimic read
                 response = self._generate_virtual_status()
             else:
                 response = self.last_status
