@@ -119,7 +119,7 @@ def create_app():
     ######################################################################
     # API Routes
     ######################################################################
-    @app.route("/api/heartbeat", methods=["GET"])
+    @app.route("/api/heartbeat", methods=["GET", "POST"])
     def hearbeat():
 
         t1 = time.time()
@@ -139,6 +139,15 @@ def create_app():
             ride = Ride.get_free_ride()
         response.update(ride.get_status())
         print(f"ride status elapsed: {time.time() - t0}")
+
+        # if POST request, update Ride information
+        if request.method == "POST":
+            ta0 = time.time()
+            payload = parse_query_payload(request)
+            print(payload)
+            ride.completed = payload["localRide"]["completed"]
+            ride.save()
+            print(f"ride update elapsed: {time.time() - ta0}")
 
         # lcd report
         # TODO: perform after flask response

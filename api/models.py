@@ -374,7 +374,7 @@ class Bike(db.Model):
         # create and run job
         if self.is_virtual:
             time.sleep(1)
-            response = {"rpm": 59.88304, "us_to_rpm_ratio": 5044.834, "us_diffs": [139592, 162508]}
+            response = {"rpm": random.randint(10, 90), "us_to_rpm_ratio": 5044.834, "us_diffs": [139592, 162508]}
         else:
             response = PybJobQueue.create_and_run_job(
                 [(f"get_rpm()", "json")], resp_idx=0, raise_exceptions=raise_exceptions
