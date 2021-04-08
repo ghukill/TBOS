@@ -279,13 +279,6 @@ class Bike(db.Model):
         app.db.session.add(self)
         app.db.session.commit()
 
-        # print to LCD
-        if to_lcd:
-            LCD.write(
-                f"l:{response['rm']['level']} v:{response['rm']['current']}",
-                f"rpm:{response['rpm']['rpm']}",
-            )
-
         # return
         print(f"get status elapsed: {time.time()-t0}")
         return response

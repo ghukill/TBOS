@@ -72,8 +72,12 @@ def create_app():
     def generic_exception(e):
         return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
 
-    # splash
+    # init
     with app.app_context():
+
+        # clear job queue
+        PybJobQueue.stop_all_jobs()
+
         try:
             LCD.write("Welcome to TBOS", "status:ready")
         except Exception as e:
