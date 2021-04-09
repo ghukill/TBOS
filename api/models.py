@@ -434,7 +434,10 @@ class Ride(db.Model):
         ser = RideSchema().dump(self)
 
         # add remaining node
-        ser["remaining"] = self.duration - self.completed
+        remaining = self.duration - self.completed
+        if remaining < 0:
+            remaining = 0
+        ser["remaining"] = remaining
 
         # return
         return ser

@@ -212,7 +212,7 @@ def create_app():
     def ride_retrieve(ride_uuid):
 
         """
-        Retrieve a single Ride
+        Retrieve a single Ride and set as current
         """
 
         # retrieve a Ride
@@ -221,7 +221,8 @@ def create_app():
             raise app.InvalidUsage(f"ride {ride_uuid} was not found", status_code=404)
 
         # set as current
-        ride.set_as_current()
+        if request.args.get("set_current", False):
+            ride.set_as_current()
 
         # serialize and return
         return jsonify(ride.serialize())
