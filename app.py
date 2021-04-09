@@ -192,11 +192,16 @@ def create_app():
         # parse payload
         payload = parse_query_payload(request)
 
+        # handle duration
+        duration = payload.get("duration", None)
+        if duration is not None:
+            duration = int(duration)
+
         # create new Ride
         ride = Ride(
             ride_uuid=str(uuid.uuid4()),
             name=payload.get("name", None),
-            duration=payload.get("duration", None),
+            duration=duration,
         )
 
         # create
