@@ -157,7 +157,7 @@ def create_app():
         # TODO: perform after flask response
         t0 = time.time()
         LCD.write(
-            f"""c:{response["ride"]["completed"]}, r:{response["ride"]["remaining"]}""",
+            f"""c:{int(response["ride"]["completed"])}, r:{int(response["ride"]["remaining"])}""",
             f"""l:{response['rm']['level']}, rpm:{int(response['rpm']['rpm'])}""",
         )
         print(f"LCD write elapsed: {time.time() - t0}")

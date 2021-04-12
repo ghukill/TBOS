@@ -670,21 +670,21 @@ class LCD:
         response = PybJobQueue.create_and_run_job(
             [
                 (
-                    "lcd.init(); pyb.delay(100)",
+                    "lcd = init_lcd()",
                     None,
                 ),
-                (f"lcd.write(['{l1}', '{l2}'], clear=True)", None),
+                (
+                    f"lcd.move_to(0,0); lcd.putstr('{l1[:16]}')",
+                    None,
+                ),
+                (
+                    f"lcd.move_to(0,1); lcd.putstr('{l2[:16]}')",
+                    None,
+                ),
             ],
             raise_exceptions=raise_exceptions,
         )
         return response
-
-    @classmethod
-    def splash(cls):
-
-        """
-        Flask launch splash screen
-        """
 
 
 ###############################################
