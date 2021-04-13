@@ -7,31 +7,46 @@ import time
 
 import pyb
 
-from embedded.debug import repl_ping
-
-from embedded.lcd import init_lcd
+# from embedded.debug import repl_ping
+#
+# from embedded.lcd import init_lcd
 from embedded.resistance_motor import read_position_sensor, goto_level, rm_status
 from embedded.rpm_sensor import get_rpm
 
 
-def status(lower_bound, upper_bound):
+vcp = pyb.USB_VCP()
+# vcp.setinterrupt(-1) # NOTE: might need if 3...
 
-    """
-    Return full sensor status
-    """
+while True:
+    pyb.delay(50)  # listen delay
 
-    t0 = time.time()
+    if vcp.any() > 0:
+        pyb.LED(3).on()
+        pyb.delay(50)  # know data coming, wait for complete
+        data = vcp.readline()
 
-    # toggle yellow LED on
-    pyb.LED(3).on()
+        # parse JSON
+        try:
+            request = json.loads(data)
+        except:
+            request = None
 
-    rm_reading = rm_status(lower_bound, upper_bound)
-    rpm_reading = get_rpm(print_results=False)
-    response = {"rm": rm_reading, "rpm": rpm_reading, "elapsed": time.time() - t0}
+        # adjust level and/or get rm status
+        pyb.LED(2).on()
+        if request is not None and request["l"] is not None:
+            rm = goto_level(request["l"], 100, 3800, 75, 0.004, 10, debug=False, print_response=False)
+        else:
+            rm = rm_status(100, 3880)
+        pyb.LED(2).off()
 
-    # toggle yellow LED off
-    pyb.LED(3).off()
+        # get rpm
+        pyb.LED(4).on()
+        rpm = get_rpm(print_results=False)
+        pyb.LED(4).off()
 
-    # print and return
-    print(json.dumps(response))
-    return response
+        response = {"request": request, "rm": rm, "rpm": rpm}
+        vcp.write(json.dumps(response).encode())
+
+        # pyb.delay(200)  # wait for pi to gobble
+        pyb.delay(50)  # little bit of grace
+        pyb.LED(3).off()
