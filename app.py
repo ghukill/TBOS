@@ -11,7 +11,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 from api.models import Bike, BikeSchema, LCD, PyboardClient, PybJobQueue, PybJobQueueSchema, Ride, RideSchema
-from api.utils import parse_query_payload
+from api.utils import parse_query_payload, tbos_state_clear
 
 from api.db import db
 
@@ -74,16 +74,7 @@ def create_app():
 
     # init
     with app.app_context():
-
-        # clear job queue
-        PybJobQueue.stop_all_jobs()
-
-        try:
-            LCD.write("Welcome to TBOS", "status:ready")
-        except Exception as e:
-            print("LCD ERROR")
-            print(str(e))
-            print(traceback.format_exc())
+        tbos_state_clear()
 
     ######################################################################
     # Debug Routes
@@ -123,48 +114,64 @@ def create_app():
     ######################################################################
     # API Routes
     ######################################################################
+    @app.route("/api/state_clear", methods=["GET", "POST"])
+    def state_clear():
+
+        """
+        Route to clear state
+        """
+
+        tbos_state_clear()
+        return jsonify({"msg": "TBOS state cleared", "success": True})
+
     @app.route("/api/heartbeat", methods=["GET", "POST"])
     def hearbeat():
 
-        t1 = time.time()
+        try:
+            t1 = time.time()
 
-        # init heartbeat
-        response = {}
+            # init heartbeat
+            response = {}
 
-        # get bike status
-        t0 = time.time()
-        response.update(Bike.current().get_status(to_lcd=False))
-        print(f"bike status elapsed: {time.time()-t0}")
+            # get bike status
+            t0 = time.time()
+            response.update(Bike.current().get_status(to_lcd=False, raise_exceptions=True))
+            print(f"bike status elapsed: {time.time()-t0}")
 
-        # get ride status
-        t0 = time.time()
-        ride = Ride.current()
-        if ride is None:
-            ride = Ride.get_free_ride()
-        response.update(ride.get_status())
-        print(f"ride status elapsed: {time.time() - t0}")
+            # get ride status
+            t0 = time.time()
+            ride = Ride.current()
+            if ride is None:
+                ride = Ride.get_free_ride()
+            response.update(ride.get_status())
+            print(f"ride status elapsed: {time.time() - t0}")
 
-        # if POST request, update Ride information
-        if request.method == "POST":
-            ta0 = time.time()
-            payload = parse_query_payload(request)
-            print(payload)
-            ride.completed = payload["localRide"]["completed"]
-            ride.save()
-            print(f"ride update elapsed: {time.time() - ta0}")
+            # if POST request, update Ride information
+            if request.method == "POST":
+                ta0 = time.time()
+                payload = parse_query_payload(request)
+                print(payload)
+                ride.completed = payload["localRide"]["completed"]
+                ride.save()
+                print(f"ride update elapsed: {time.time() - ta0}")
 
-        # lcd report
-        # TODO: perform after flask response
-        t0 = time.time()
-        LCD.write(
-            f"""c:{int(response["ride"]["completed"])}, r:{int(response["ride"]["remaining"])}""",
-            f"""l:{response['rm']['level']}, rpm:{int(response['rpm']['rpm'])}""",
-        )
-        print(f"LCD write elapsed: {time.time() - t0}")
+            # lcd report
+            # TODO: perform after flask response
+            t0 = time.time()
+            LCD.write(
+                f"""c:{int(response["ride"]["completed"])}, r:{int(response["ride"]["remaining"])}""",
+                f"""l:{response['rm']['level']}, rpm:{int(response['rpm']['rpm'])}""",
+            )
+            print(f"LCD write elapsed: {time.time() - t0}")
 
-        # return
-        print(f"heartbeat elapsed: {time.time()-t1}")
-        return jsonify(response)
+            # return
+            print(f"heartbeat elapsed: {time.time()-t1}")
+            return jsonify(response)
+
+        except Exception as e:
+            print(str(e))
+            print(traceback.format_exc())
+            return jsonify({"error": str(e)}), 500
 
     @app.route("/api/rides", methods=["GET"])
     def rides():

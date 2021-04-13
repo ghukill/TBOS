@@ -136,6 +136,17 @@ class PyboardClient:
         else:
             return responses
 
+    def soft_reboot(self):
+
+        """
+        Soft reboot by entering/exiting repl
+        """
+
+        print("soft rebooting")
+        self.pyb.enter_raw_repl()
+        self.pyb.exit_raw_repl()
+        return True
+
 
 class Bike(db.Model):
 

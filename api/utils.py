@@ -2,10 +2,12 @@
 TBOS API utils
 """
 
-import json
+import traceback
 
 import flask
 from flask import jsonify
+
+from api.models import Bike, LCD, PybJobQueue, PyboardClient
 
 app = flask.current_app
 
@@ -106,3 +108,48 @@ def recreate_db():
     )
     app.db.session.add(lf_c1)
     app.db.session.commit()
+
+
+def tbos_state_clear():
+
+    """"""
+
+    print("TBOS init")
+
+    # clear job queue
+    print("stopping all jobs...")
+    PybJobQueue.stop_all_jobs()
+
+    # clear last bike status
+    print("clearing previous bike status...")
+    app.db.session.execute(
+        """
+        update bike set last_status = null
+        """
+    )
+
+    # clearing current rides
+    print("clearing current ride...")
+    app.db.session.execute(
+        """
+        update ride set is_current = 0
+        """
+    )
+
+    # commit
+    app.db.session.commit()
+
+    # soft reboot of pyboard
+    print("soft reboot...")
+    pc = PyboardClient()
+    pc.soft_reboot()
+
+    # splash screen
+    try:
+        LCD.write("Welcome to TBOS", "status:init")
+    except Exception as e:
+        print("LCD ERROR")
+        print(str(e))
+        print(traceback.format_exc())
+
+    print("TBOS init complete")
