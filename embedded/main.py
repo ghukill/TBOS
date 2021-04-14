@@ -51,7 +51,7 @@ while True:
                     request["level"],
                     request.get("lower_bound", 100),
                     request.get("upper_bound", 3800),
-                    request.get("pwm", 75),
+                    request.get("pwm", 60),
                     request.get("sweep_delay", 0.006),
                     request.get("settle_threshold", 10),
                     debug=False,
