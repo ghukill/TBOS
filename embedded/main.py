@@ -7,46 +7,81 @@ import time
 
 import pyb
 
-# from embedded.debug import repl_ping
-#
 # from embedded.lcd import init_lcd
-from embedded.resistance_motor import read_position_sensor, goto_level, rm_status
+from embedded.resistance_motor import goto_level, rm_status
 from embedded.rpm_sensor import get_rpm
 
 
 vcp = pyb.USB_VCP()
 # vcp.setinterrupt(-1) # NOTE: might need if 3...
 
+
+def serial_response(response):
+    vcp.write(json.dumps(response).encode())
+
+
 while True:
-    pyb.delay(50)  # listen delay
 
+    # if anything in serial bus, parse
     if vcp.any() > 0:
-        pyb.LED(3).on()
-        pyb.delay(50)  # know data coming, wait for complete
-        data = vcp.readline()
 
-        # parse JSON
+        # debug
+        t0 = time.time()
+
+        # default
+        error = None
+
         try:
-            request = json.loads(data)
-        except:
-            request = None
+            # toggle serial work LED
+            pyb.LED(3).on()
 
-        # adjust level and/or get rm status
-        pyb.LED(2).on()
-        if request is not None and request["l"] is not None:
-            rm = goto_level(request["l"], 100, 3800, 75, 0.004, 10, debug=False, print_response=False)
-        else:
-            rm = rm_status(100, 3880)
-        pyb.LED(2).off()
+            # wait for data to complete
+            pyb.delay(50)
 
-        # get rpm
-        pyb.LED(4).on()
-        rpm = get_rpm(print_results=False)
-        pyb.LED(4).off()
+            # parse input data
+            raw_input = vcp.readline()
 
-        response = {"request": request, "rm": rm, "rpm": rpm}
-        vcp.write(json.dumps(response).encode())
+            # parse request JSON
+            request = json.loads(raw_input)
 
-        # pyb.delay(200)  # wait for pi to gobble
-        pyb.delay(50)  # little bit of grace
+            # adjust level and/or get rm status
+            pyb.LED(2).on()
+            if request.get("level", None) is not None:
+                rm = goto_level(
+                    request["level"],
+                    request.get("lower_bound", 100),
+                    request.get("upper_bound", 3800),
+                    request.get("pwm", 75),
+                    request.get("sweep_delay", 0.006),
+                    request.get("settle_threshold", 10),
+                    debug=False,
+                )
+            else:
+                rm = rm_status(
+                    request.get("lower_bound", 100),
+                    request.get("upper_bound", 3800),
+                )
+            pyb.LED(2).off()
+
+            # get rpm
+            if not request.get("skip_rpm", False):
+                pyb.LED(4).on()
+                rpm = get_rpm()
+                pyb.LED(4).off()
+
+            # build response
+            response = {"request": request, "rm": rm, "rpm": rpm, "error": error}
+
+        except Exception as e:
+            # build response
+            response = {"error": str(e), "raw_input": raw_input}
+
+        # write response over serial
+        response["elapsed"] = time.time() - t0
+        serial_response(response)
+
+        # toggle serial work LED
         pyb.LED(3).off()
+
+    # main loop delay
+    pyb.delay(50)

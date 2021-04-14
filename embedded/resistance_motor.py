@@ -44,9 +44,7 @@ def determine_step(lower_bound, upper_bound, step_num=20):
     return round(((upper_bound - lower_bound) - 1) / step_num)
 
 
-def goto_level(
-    level, lower_bound, upper_bound, pwm_level, sweep_delay, settled_threshold, debug=False, print_response=True
-):
+def goto_level(level, lower_bound, upper_bound, pwm_level, sweep_delay, settled_threshold, debug=False):
 
     """
     :param pwm_level: percentage of input 9v (9v @ 50% = 5.69v)
@@ -104,15 +102,13 @@ def goto_level(
             in1.low()
             in2.low()
 
-    # print/return response
+    # return response
     response = {
         "loop_count": loop_count,
         "level": level,
         "current": current,
         "target": target,
     }
-    if print_response:
-        print(json.dumps(response))
     return response
 
 
