@@ -389,6 +389,13 @@ class GpioLcd(LcdApi):
         self.d4_pin.value(nibble & 0x01)
         self.hal_pulse_enable()
 
+    def simple_write(self, l1, l2):
+        self.clear()
+        self.move_to(0, 0)
+        self.putstr(l1[:16])
+        self.move_to(0, 1)
+        self.putstr(l2[:16])
+
 
 def init_lcd():
 

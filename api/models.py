@@ -44,14 +44,17 @@ class PyboardClient:
         # automatically detect port
         self.pyboard_port = self.detect_pyboard_port()
 
+        # set serial timeouts
+        self.serial_timeout = 5
+
         # setup pyb interface
         try:
             self.pyb = pyboard.Pyboard(self.pyboard_port, 115200)
+            self.pyb.serial.timeout = self.serial_timeout
         except:
             print("WARNING: cannot access pyboard")
             self.pyb = None
 
-        # DEBUG
         print(f"time to init PyboardClient: {time.time()-t0}")
 
     def detect_pyboard_port(self):
@@ -77,55 +80,31 @@ class PyboardClient:
 
         return self.execute([("from main import repl_ping", None), ("repl_ping()", "string")], resp_idx=0)
 
-    def execute(self, cmds, resp_idx=None, skip_main_import=False, debug=False):
+    def execute(self, cmds, resp_idx=None, debug=False):
 
         """
         Issue passed command(s), aggregating responses and returning
-        :param cmds: list of tuples, (cmd, response format)
-            - e.g. [('repl_ping()', 'string'), ('give_me_json()', 'json')]
+        :param cmds: list of commands (each a dict)
         :param resp_ids: int, optional, if present return only that response from the response list
         """
-
-        # begin repl session
-        self.pyb.enter_raw_repl()
 
         # loop through commands, execute, and handle response
         responses = []
 
-        # perform default imports on pyboard for repl session
-        if not skip_main_import:
-            self.pyb.exec("from main import *")
-
-        for cmd, response_format in cmds:
+        for cmd in cmds:
             try:
-                response = self.pyb.exec(cmd)
+
+                response = self.write_serial(cmd)
+
                 if debug:
                     print(response)
 
-                # if response format is None, continue without touching response
-                if response_format is None:
-                    continue
-
-                # decode and rstrip response
-                response = response.decode()
-                response = response.rstrip()
-
-                # handle types
-                if response_format == "json":
-                    response = json.loads(response)
-                if response_format == "int":
-                    response = int(response)
-                if response_format == "float":
-                    response = float(response)
-
                 # append to responses
                 responses.append(response)
-            except Exception as e:
-                self.pyb.exit_raw_repl()
-                raise PybReplCmdError(cmd)
 
-        # close repl
-        self.pyb.exit_raw_repl()
+            except Exception as e:
+                # TODO: error handling for bad serial write
+                raise Exception("ERROR WITH SERIAL JOB WRITE")
 
         # return responses
         if resp_idx is not None:
@@ -139,13 +118,57 @@ class PyboardClient:
     def soft_reboot(self):
 
         """
-        Soft reboot by entering/exiting repl
+        Soft reboot
         """
 
         print("soft rebooting")
         self.pyb.enter_raw_repl()
         self.pyb.exit_raw_repl()
         return True
+
+    def write_serial(self, msg_dict, followup=True):
+
+        """
+        Write serial data to pyboard, assuming all writes will be encoded JSON
+
+        :param msg_dict: dictionary to write
+        """
+
+        # write msg_dict
+        receipt = self.pyb.serial.write(json.dumps(msg_dict).encode())
+
+        # followup and return
+        if followup:
+            response = self.read_serial()
+        else:
+            response = None
+        return response
+
+    def read_serial(self):
+
+        """
+        Receieve JSON message
+            - end of message signature "EOM"
+        """
+
+        # poll for raw response
+        raw_response = self.pyb.read_until(1, "EOM".encode(), timeout=self.serial_timeout)
+
+        # if response is empty, return None
+        if raw_response == b"":
+            return None
+
+        # parse JSON from response
+        try:
+            response = raw_response.decode()
+            response = response.rstrip("EOM")
+            response = json.loads(response)
+        except Exception as e:
+            print(raw_response)
+            raise (e)
+
+        # return
+        return response
 
 
 class Bike(db.Model):
@@ -254,7 +277,7 @@ class Bike(db.Model):
         app.db.session.commit()
         return virtual_status
 
-    def get_status(self, to_lcd=True, raise_exceptions=False):
+    def get_status(self, raise_exceptions=False):
 
         """
         Get status report from embedded controller about Bike
@@ -272,12 +295,7 @@ class Bike(db.Model):
                 response = self.last_status
         else:
             response = PybJobQueue.create_and_run_job(
-                [
-                    (
-                        f"status({self._config.rm.lower_bound}, {self._config.rm.upper_bound})",
-                        "json",
-                    )
-                ],
+                [{"level": None}],
                 resp_idx=0,
                 raise_exceptions=raise_exceptions,
             )
@@ -579,7 +597,7 @@ class PybJobQueue(db.Model):
             # execute
             response = pc.execute(self.cmds, resp_idx=self.resp_idx)
 
-            # mark as successfully
+            # mark as successful
             self.status = "success"
             self.resps = response
             app.db.session.commit()
