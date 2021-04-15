@@ -6,7 +6,6 @@ import json
 import sys
 import time
 
-import machine
 import pyb
 
 from embedded.lcd import init_lcd
@@ -15,7 +14,6 @@ from embedded.rpm_sensor import get_rpm
 
 
 vcp = pyb.USB_VCP()
-# vcp.setinterrupt(-1) # NOTE: might need if 3...
 
 
 def serial_response(response):
@@ -26,13 +24,14 @@ def serial_response(response):
 def handle_reboot(reboot_type):
     if reboot_type == "soft":
         sys.exit()
-    elif reboot_type == "hard":
-        machine.reset()
 
 
 # init lcd
 lcd = init_lcd()
 lcd.clear()
+lcd.simple_write("TBOS", "warming up...")
+pyb.delay(2000)
+lcd.simple_write("TBOS", "ready!")
 
 while True:
 
@@ -124,4 +123,4 @@ while True:
             pyb.LED(x).off()
 
     # main loop delay
-    pyb.delay(50)
+    pyb.delay(10)
