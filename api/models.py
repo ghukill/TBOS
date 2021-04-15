@@ -718,6 +718,23 @@ class LCD:
         )
         return response
 
+    # def long_write(self, msg):
+    #
+    #     """
+    #     Placeholder logic for long write
+    #     """
+    #
+    #     p = 0
+    #     l = len(msg)
+    #
+    #     while True:
+    #         pc.write_serial({"lcd": {"l1": msg[p : (p + 16)], "l2": msg[(p + 16) : (p + 32)]}})
+    #         time.sleep(2)
+    #         p += 32
+    #         if p >= l:
+    #             pc.write_serial({"lcd": {"l1": "EOM", "l2": "length: %s" % str(l)}})
+    #             break
+
 
 ###############################################
 # SCHEMAS
