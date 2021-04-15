@@ -391,10 +391,14 @@ class GpioLcd(LcdApi):
 
     def simple_write(self, l1, l2):
         self.clear()
+        if l1 is None:
+            l1 = ""
+        if l2 is None:
+            l2 = ""
         self.move_to(0, 0)
-        self.putstr(l1[:16])
+        self.putstr(str(l1)[:16])
         self.move_to(0, 1)
-        self.putstr(l2[:16])
+        self.putstr(str(l2)[:16])
 
 
 def init_lcd():

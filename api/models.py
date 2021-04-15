@@ -134,6 +134,9 @@ class PyboardClient:
         :param msg_dict: dictionary to write
         """
 
+        # append sender
+        msg_dict["sender"] = "client"
+
         # write msg_dict
         receipt = self.pyb.serial.write(json.dumps(msg_dict).encode())
 

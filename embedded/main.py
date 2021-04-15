@@ -3,7 +3,6 @@ TBOS: main embedded driver
 """
 
 import json
-import sys
 import time
 
 import pyb
@@ -21,18 +20,18 @@ def serial_response(response):
     vcp.write(response_str.encode())
 
 
-def handle_reboot(reboot_type):
-    if reboot_type == "soft":
-        sys.exit()
-
-
 # init lcd
 lcd = init_lcd()
 lcd.clear()
-lcd.simple_write("TBOS", "warming up...")
-pyb.delay(2000)
-lcd.simple_write("TBOS", "ready!")
 
+# warmup: clear serial buffer
+lcd.simple_write("TBOS warming...", None)
+t0 = pyb.millis()
+r = vcp.recv(19, timeout=10000)  # what are these 19 characters!?
+pyb.delay(2000)
+lcd.simple_write("TBOS ready!", "c %s ms %s" % (str(len(r)), (pyb.millis() - t0)))
+
+# main loop
 while True:
 
     # if anything in serial bus, parse
@@ -45,7 +44,7 @@ while True:
         l2 = ""
 
         # init response
-        response = {"error": None}
+        response = {"error": None, "sender": "pyboard"}
 
         try:
             # toggle serial work LED
@@ -58,11 +57,26 @@ while True:
             raw_input = vcp.readline()
 
             # parse request JSON
-            request = json.loads(raw_input)
+            try:
+                request = json.loads(raw_input)
+            except:
+                lcd.simple_write("ERROR: JSON", "")
+                pyb.delay(1000)
+                try:
+                    raw_input = raw_input.decode()
+                except:
+                    pass
+                lcd.simple_write(">> %s" % raw_input[:12], raw_input[12:])
+                pyb.delay(1000)
+                lcd.clear()
+                continue
 
-            # handle soft reboot
-            if request.get("reboot", None) is not None:
-                handle_reboot(request["reboot"])
+            # if read message is sent by pyboard, ignore
+            if request.get("sender", None) == "pyboard":
+                lcd.simple_write("self serial:", "ignoring...")
+                pyb.delay(1000)
+                lcd.clear()
+                continue
 
             elif request.get("lcd", None) is not None:
                 l1 = request["lcd"]["l1"]
@@ -73,7 +87,7 @@ while True:
                 pyb.LED(2).on()
                 if request.get("level", None) is not None:
                     rm = goto_level(
-                        request["level"],
+                        request.get("level", None),
                         request.get("lower_bound", 100),
                         request.get("upper_bound", 3800),
                         request.get("pwm", 60),
@@ -118,9 +132,7 @@ while True:
         # write to LCD
         lcd.simple_write(l1, l2)
 
-        # toggle LEDs
-        for x in [2, 3, 4]:
-            pyb.LED(x).off()
-
-    # main loop delay
+    # toggle LEDs and delay
+    for x in [2, 3, 4]:
+        pyb.LED(x).off()
     pyb.delay(10)
