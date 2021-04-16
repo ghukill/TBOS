@@ -722,7 +722,6 @@ class LCD:
 
 ###############################################
 # SCHEMAS
-# TODO: parser for JSON columns stored as strings
 ###############################################
 class BikeSchema(SQLAlchemyAutoSchema):
     class Meta:
