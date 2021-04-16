@@ -20,16 +20,20 @@ def serial_response(response):
     vcp.write(response_str.encode())
 
 
+def time_elapsed(t0):
+    return (time.ticks_ms() / 1000) - (t0 / 1000)
+
+
 # init lcd
 lcd = init_lcd()
 lcd.clear()
 
 # warmup: clear serial buffer
 lcd.simple_write("TBOS warming...", None)
-t0 = pyb.millis()
+t0 = time.ticks_ms()
 r = vcp.recv(19, timeout=10000)  # what are these 19 characters!?
 pyb.delay(2000)
-lcd.simple_write("TBOS ready!", "c %s ms %s" % (str(len(r)), (pyb.millis() - t0)))
+lcd.simple_write("TBOS ready!", "c %s ms %s" % (str(len(r)), time_elapsed(t0)))
 
 # main loop
 while True:
@@ -38,10 +42,14 @@ while True:
     if vcp.any() > 0:
 
         # debug
-        t0 = time.time()
+        t0 = time.ticks_ms()
 
-        l1 = ""
-        l2 = ""
+        # init LCD outputs
+        l1 = None
+        l2 = None
+
+        # init raw_response
+        raw_response = None
 
         # init response
         response = {"error": None, "sender": "pyboard"}
@@ -83,6 +91,10 @@ while True:
                 l2 = request["lcd"]["l2"]
 
             else:
+
+                # tag as heartbeat
+                response["hb"] = True
+
                 # adjust level and/or get rm status
                 pyb.LED(2).on()
                 if request.get("level", None) is not None:
@@ -124,7 +136,7 @@ while True:
             response.update({"error": str(e), "raw_input": raw_input})
 
         # append elapsed
-        response.update({"elapsed": time.time() - t0})
+        response.update({"elapsed": time_elapsed(t0)})
 
         # write response over serial
         serial_response(response)

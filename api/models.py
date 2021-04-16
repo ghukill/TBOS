@@ -103,8 +103,7 @@ class PyboardClient:
                 responses.append(response)
 
             except Exception as e:
-                # TODO: error handling for bad serial write
-                raise Exception("ERROR WITH SERIAL JOB WRITE")
+                raise Exception("ERROR WITH SERIAL JOB WRITE")  # TODO: error handling for bad serial write
 
         # return responses
         if resp_idx is not None:
@@ -298,7 +297,7 @@ class Bike(db.Model):
                 response = self.last_status
         else:
             response = PybJobQueue.create_and_run_job(
-                [{"level": None}],
+                [{}],
                 resp_idx=0,
                 raise_exceptions=raise_exceptions,
             )
@@ -332,21 +331,22 @@ class Bike(db.Model):
         else:
             response = PybJobQueue.create_and_run_job(
                 [
-                    (
-                        f"goto_level({level}, {self._config.rm.lower_bound}, {self._config.rm.upper_bound}, {self._config.rm.pwm_level}, {self._config.rm.sweep_delay}, {self._config.rm.settled_threshold})",
-                        "json",
-                    )
+                    {
+                        "level": level,
+                        "lower_bound": self._config.rm.lower_bound,
+                        "upper_bound": self._config.rm.upper_bound,
+                        "pwm": self._config.rm.pwm_level,
+                        "sweep_delay": self._config.rm.sweep_delay,
+                        "settle_threshold": self._config.rm.settled_threshold,
+                    }
                 ],
                 resp_idx=0,
                 raise_exceptions=raise_exceptions,
             )
         print(f"level adjust elapsed: {time.time()-t0}")
 
-        # get status
-        status = self.get_status()
-
         # return
-        return status
+        return response
 
     def adjust_level_down(self, raise_exceptions=False):
 
@@ -388,24 +388,6 @@ class Bike(db.Model):
         self._level = new_level
 
         # return
-        return response
-
-    def get_rpm(self, raise_exceptions=False):
-
-        """
-        Get RPM sensor reading
-        """
-
-        # create and run job
-        if self.is_virtual:
-            time.sleep(1)
-            response = {"rpm": random.randint(10, 90), "us_to_rpm_ratio": 5044.834, "us_diffs": [139592, 162508]}
-        else:
-            response = PybJobQueue.create_and_run_job(
-                [(f"get_rpm()", "json")], resp_idx=0, raise_exceptions=raise_exceptions
-            )
-
-        # return response
         return response
 
 
@@ -699,41 +681,35 @@ class LCD:
 
     @classmethod
     def write(self, l1, l2, raise_exceptions=False):
+
+        """
+        Explicit two line message
+        """
+
         response = PybJobQueue.create_and_run_job(
-            [
-                (
-                    "lcd = init_lcd()",
-                    None,
-                ),
-                (
-                    f"lcd.move_to(0,0); lcd.putstr('{l1[:16]}')",
-                    None,
-                ),
-                (
-                    f"lcd.move_to(0,1); lcd.putstr('{l2[:16]}')",
-                    None,
-                ),
-            ],
+            [{"lcd": {"l1": l1, "l2": l2}}],
             raise_exceptions=raise_exceptions,
         )
         return response
 
-    # def long_write(self, msg):
-    #
-    #     """
-    #     Placeholder logic for long write
-    #     """
-    #
-    #     p = 0
-    #     l = len(msg)
-    #
-    #     while True:
-    #         pc.write_serial({"lcd": {"l1": msg[p : (p + 16)], "l2": msg[(p + 16) : (p + 32)]}})
-    #         time.sleep(2)
-    #         p += 32
-    #         if p >= l:
-    #             pc.write_serial({"lcd": {"l1": "EOM", "l2": "length: %s" % str(l)}})
-    #             break
+    @classmethod
+    def write_long(cls, msg, raise_exceptions=False):
+
+        """
+        Long or unknown length message
+        """
+
+        p = 0
+        l = len(msg)
+
+        while True:
+            cls.write(msg[p : (p + 16)], msg[(p + 16) : (p + 32)])
+            time.sleep(2)
+            p += 32
+            if p >= l:
+                cls.write("EOM", f"len: {l}")
+                break
+        return l
 
 
 ###############################################

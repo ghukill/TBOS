@@ -139,17 +139,12 @@ def tbos_state_clear():
     # commit
     app.db.session.commit()
 
-    # # soft reboot of pyboard
-    # print("soft reboot...")
-    # pc = PyboardClient()
-    # pc.soft_reboot()
-
-    # # splash screen
-    # try:
-    #     LCD.write("Welcome to TBOS", "status:init")
-    # except Exception as e:
-    #     print("LCD ERROR")
-    #     print(str(e))
-    #     print(traceback.format_exc())
+    # splash screen
+    try:
+        LCD.write("TBOS API", "ready!")
+    except Exception as e:
+        print("LCD ERROR")
+        print(str(e))
+        print(traceback.format_exc())
 
     print("TBOS init complete")

@@ -135,7 +135,7 @@ def create_app():
 
             # get bike status
             t0 = time.time()
-            response.update(Bike.current().get_status(to_lcd=False, raise_exceptions=True))
+            response.update(Bike.current().get_status(raise_exceptions=True))
             print(f"bike status elapsed: {time.time()-t0}")
 
             # get ride status
@@ -154,15 +154,6 @@ def create_app():
                 ride.completed = payload["localRide"]["completed"]
                 ride.save()
                 print(f"ride update elapsed: {time.time() - ta0}")
-
-            # lcd report
-            # TODO: perform after flask response
-            t0 = time.time()
-            LCD.write(
-                f"""c:{int(response["ride"]["completed"])}, r:{int(response["ride"]["remaining"])}""",
-                f"""l:{response['rm']['level']}, rpm:{int(response['rpm']['rpm'])}""",
-            )
-            print(f"LCD write elapsed: {time.time() - t0}")
 
             # return
             print(f"heartbeat elapsed: {time.time()-t1}")
@@ -376,21 +367,12 @@ def create_app():
         response = Bike.current().adjust_level_up()
         return jsonify(response)
 
-    @app.route("/api/bike/rpm", methods=["GET"])
-    def api_rpm_get():
-
-        """
-        Get bike RPM reading
-        """
-
-        response = Bike.current().get_rpm()
-        return jsonify(response)
-
     @app.route("/api/jobs", methods=["GET"])
     def api_jobs_retrieve():
 
         """
         Return all jobs
+        TODO: this needs some limits, as this could grow quickly
         """
 
         return jsonify(PybJobQueueSchema(many=True).dump(PybJobQueue.query.all()))
