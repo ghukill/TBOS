@@ -45,7 +45,7 @@ class PyboardClient:
         self.pyboard_port = self.detect_pyboard_port()
 
         # set serial timeouts
-        self.serial_timeout = 5
+        self.serial_timeout = 30
 
         # setup pyb interface
         try:
@@ -632,7 +632,7 @@ class PybJobQueue(db.Model):
             job.execute()
 
     @classmethod
-    def create_and_run_job(cls, cmds, resp_idx=None, timeout=10, raise_exceptions=False):
+    def create_and_run_job(cls, cmds, resp_idx=None, timeout=30, raise_exceptions=False):
 
         """
         Method to:
