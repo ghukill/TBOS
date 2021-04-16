@@ -297,7 +297,13 @@ class Bike(db.Model):
                 response = self.last_status
         else:
             response = PybJobQueue.create_and_run_job(
-                [{}],
+                [
+                    {
+                        "level": None,
+                        "lower_bound": self._config.rm.lower_bound,
+                        "upper_bound": self._config.rm.upper_bound,
+                    }
+                ],
                 resp_idx=0,
                 raise_exceptions=raise_exceptions,
             )
