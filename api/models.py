@@ -327,7 +327,7 @@ class Bike(db.Model):
         t0 = time.time()
         if self.is_virtual:
             time.sleep(1)
-            self._generate_virtual_status(level)
+            response = self._generate_virtual_status(level)
         else:
             response = PybJobQueue.create_and_run_job(
                 [
@@ -344,6 +344,14 @@ class Bike(db.Model):
                 raise_exceptions=raise_exceptions,
             )
         print(f"level adjust elapsed: {time.time()-t0}")
+
+        # update level
+        self._level = response["rm"]["level"]
+
+        # save to db
+        self.last_status = response
+        app.db.session.add(self)
+        app.db.session.commit()
 
         # return
         return response
