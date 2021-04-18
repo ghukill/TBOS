@@ -273,7 +273,7 @@ class Bike(db.Model):
         """
         current = int(((self._config.rm.upper_bound - self._config.rm.lower_bound) / 20) * level)
         rm = {"level": level, "current": current}
-        virtual_status = {"rm": rm, "rpm": self.get_rpm()}
+        virtual_status = {"rm": rm, "rpm": {"rpm": 62.01}}
         self.last_status = virtual_status
         app.db.session.add(self)
         app.db.session.commit()
@@ -541,6 +541,26 @@ class Ride(db.Model):
 
         # return
         return free_ride
+
+
+class Heartbeat(db.Model):
+
+    """
+    Model for heartbeat recordings
+    """
+
+    hb_uuid = db.Column(db.String, primary_key=True, default=str(uuid.uuid4()))
+    timestamp_added = db.Column(db.Integer, nullable=False, default=timestamp_now)
+    ride_uuid = db.Column(db.String, nullable=True)
+    data = db.Column(db.JSON, nullable=True)
+
+    def save(self):
+        try:
+            app.db.session.add(self)
+            app.db.session.commit()
+        except Exception as e:
+            app.db.session.rollback()
+            raise e
 
 
 class PybJobQueue(db.Model):

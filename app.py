@@ -10,7 +10,7 @@ import uuid
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-from api.models import Bike, BikeSchema, LCD, PyboardClient, PybJobQueue, PybJobQueueSchema, Ride, RideSchema
+from api.models import Bike, BikeSchema, LCD, PyboardClient, PybJobQueue, PybJobQueueSchema, Ride, RideSchema, Heartbeat
 from api.utils import parse_query_payload, tbos_state_clear
 
 from api.db import db
@@ -154,6 +154,12 @@ def create_app():
                 ride.completed = payload["localRide"]["completed"]
                 ride.save()
                 print(f"ride update elapsed: {time.time() - ta0}")
+
+            # record heartbeat
+            t0 = time.time()
+            hb = Heartbeat(hb_uuid=str(uuid.uuid4()), ride_uuid=ride.ride_uuid, data=response)
+            hb.save()
+            print(f"heartbeat recorded elapsed: {time.time() - t0}")
 
             # return
             print(f"heartbeat elapsed: {time.time()-t1}")

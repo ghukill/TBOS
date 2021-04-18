@@ -42,7 +42,7 @@ def recreate_db():
 
     # drop tables
     print("dropping tables")
-    for table in ["bike", "ride", "pyb_job_queue"]:
+    for table in ["bike", "ride", "pyb_job_queue", "heartbeat"]:
         try:
             app.db.session.execute(f"drop table {table};")
             app.db.session.commit()
@@ -67,6 +67,28 @@ def recreate_db():
                 "pwm_level": 75,
                 "settled_threshold": 30,
                 "sweep_delay": 0.006,
+                "explicit_targets": [
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                ],
             },
             "rpm": {},
         },
@@ -81,9 +103,31 @@ def recreate_db():
             "rm": {
                 "lower_bound": 100,
                 "upper_bound": 3800,
-                "pwm_level": 75,
-                "settled_threshold": 30,
+                "pwm_level": 60,
+                "settled_threshold": 10,
                 "sweep_delay": 0.006,
+                "explicit_targets": [
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                ],
             },
             "rpm": {},
         },
@@ -96,11 +140,33 @@ def recreate_db():
         config={
             "virtual": False,
             "rm": {
-                "lower_bound": 988,
+                "lower_bound": 897,
                 "upper_bound": 3773,
-                "pwm_level": 100,
+                "pwm_level": 75,
                 "settled_threshold": 10,
                 "sweep_delay": 0.04,
+                "explicit_targets": [
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                ],
             },
             "rpm": {},
         },
@@ -118,23 +184,32 @@ def tbos_state_clear():
 
     # clear job queue
     print("stopping all jobs...")
-    PybJobQueue.stop_all_jobs()
+    try:
+        PybJobQueue.stop_all_jobs()
+    except Exception as e:
+        print({"error": str(e), "traceback": traceback.format_exc()})
 
     # clear last bike status
     print("clearing previous bike status...")
-    app.db.session.execute(
-        """
-        update bike set last_status = null
-        """
-    )
+    try:
+        app.db.session.execute(
+            """
+            update bike set last_status = null
+            """
+        )
+    except Exception as e:
+        print({"error": str(e), "traceback": traceback.format_exc()})
 
     # clearing current rides
     print("clearing current ride...")
-    app.db.session.execute(
-        """
-        update ride set is_current = 0
-        """
-    )
+    try:
+        app.db.session.execute(
+            """
+            update ride set is_current = 0
+            """
+        )
+    except Exception as e:
+        print({"error": str(e), "traceback": traceback.format_exc()})
 
     # commit
     app.db.session.commit()
@@ -143,8 +218,6 @@ def tbos_state_clear():
     try:
         LCD.write("TBOS API", "ready!")
     except Exception as e:
-        print("LCD ERROR")
-        print(str(e))
-        print(traceback.format_exc())
+        print({"error": str(e), "traceback": traceback.format_exc()})
 
     print("TBOS init complete")

@@ -61,10 +61,10 @@ while True:
             # wait for data to complete
             pyb.delay(50)
 
-            # parse input data
+            # read serial input data
             raw_input = vcp.readline()
 
-            # parse request JSON
+            # parse serial input as JSON
             try:
                 request = json.loads(raw_input)
             except:
@@ -79,13 +79,14 @@ while True:
                 lcd.clear()
                 continue
 
-            # if read message is sent by pyboard, ignore
+            # if serial message is sent by pyboard, ignore
             if request.get("sender", None) == "pyboard":
                 lcd.simple_write("self serial:", "ignoring...")
                 pyb.delay(1000)
                 lcd.clear()
                 continue
 
+            # handle LCD tasks
             elif request.get("lcd", None) is not None:
                 l1 = request["lcd"]["l1"]
                 l2 = request["lcd"]["l2"]
