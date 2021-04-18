@@ -134,17 +134,17 @@ def create_app():
             response = {}
 
             # get bike status
-            t0 = time.time()
+            tb0 = time.time()
             response.update(Bike.current().get_status(raise_exceptions=True))
-            print(f"bike status elapsed: {time.time()-t0}")
+            print(f"bike status elapsed: {time.time()-tb0}")
 
             # get ride status
-            t0 = time.time()
+            tr0 = time.time()
             ride = Ride.current()
             if ride is None:
                 ride = Ride.get_free_ride()
             response.update(ride.get_status())
-            print(f"ride status elapsed: {time.time() - t0}")
+            print(f"ride status elapsed: {time.time() - tr0}")
 
             # if POST request, update Ride information
             if request.method == "POST":
@@ -156,10 +156,10 @@ def create_app():
                 print(f"ride update elapsed: {time.time() - ta0}")
 
             # record heartbeat
-            t0 = time.time()
+            thb0 = time.time()
             hb = Heartbeat(hb_uuid=str(uuid.uuid4()), ride_uuid=ride.ride_uuid, data=response)
             hb.save()
-            print(f"heartbeat recorded elapsed: {time.time() - t0}")
+            print(f"heartbeat recorded elapsed: {time.time() - thb0}")
 
             # return
             print(f"heartbeat elapsed: {time.time()-t1}")
