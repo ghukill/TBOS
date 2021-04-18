@@ -46,7 +46,7 @@ class PyboardClient:
         self.pyboard_port = self.detect_pyboard_port()
 
         # set serial timeouts
-        self.serial_timeout = 30
+        self.serial_timeout = 20
 
         # setup pyb interface
         try:
@@ -81,7 +81,7 @@ class PyboardClient:
 
         return self.execute([("from main import repl_ping", None), ("repl_ping()", "string")], resp_idx=0)
 
-    def execute(self, cmds, resp_idx=None, debug=False):
+    def execute(self, cmds, resp_idx=None, debug=True):
 
         """
         Issue passed command(s), aggregating responses and returning
@@ -137,24 +137,43 @@ class PyboardClient:
         # append sender
         msg_dict["sender"] = "client"
 
+        # clear buffer
+        self.pyb.serial.flushInput()
+
         # write msg_dict
         receipt = self.pyb.serial.write(json.dumps(msg_dict).encode())
 
         # followup and return
         if followup:
             response = self.read_serial()
+
         else:
             response = None
         return response
 
-    def read_serial(self):
+    def read_serial(self, nibble_timeout=3):
 
         """
-        Receieve JSON message
+        Receive JSON message
             - end of message signature "EOM"
         """
 
+        # wait for nibble from the pyboard
+        nibble_timeout_start = time.time()
+        while True:
+            if time.time() - nibble_timeout_start > nibble_timeout:
+                raise Exception("timeout exceeded for nibble response")
+            elif self.pyb.serial.in_waiting == 3:
+                bom_mark = self.pyb.serial.read(3)
+                if bom_mark.decode() != "BOM":
+                    raise Exception("pyboard response BOM mark not correct")
+                print("nibble received")
+                break
+            else:
+                time.sleep(0.01)
+
         # poll for raw response
+        # NOTE: could do this manually, but it's an interesting approach
         raw_response = self.pyb.read_until(1, "EOM".encode(), timeout=self.serial_timeout)
 
         # if response is empty, return None
@@ -166,6 +185,12 @@ class PyboardClient:
             response = raw_response.decode()
             response = response.rstrip("EOM")
             response = json.loads(response)
+
+            # note handled error
+            if response.get("error", None) is not None:
+                # print(f"ERROR DETECTED: {response['error']}")
+                raise Exception({"response_error": response["error"]})
+
         except Exception as e:
             print(raw_response)
             raise (e)
@@ -455,7 +480,7 @@ class Ride(db.Model):
         """
         return cls.query.filter(cls.is_current == True).one_or_none()
 
-    def serialize(self):
+    def serialize(self, include_heartbeats=False):
 
         """
         Custom serialization for Ride
@@ -470,9 +495,10 @@ class Ride(db.Model):
             remaining = 0
         ser["remaining"] = remaining
 
-        # TODO: parameterize if this fires
-        hb_data = [(hb.timestamp_added, hb.level, hb.rpm) for hb in self.heartbeats]
-        ser["hb_data"] = hb_data
+        # include heartbeats data
+        if include_heartbeats:
+            hb_data = [(hb.timestamp_added, hb.level, hb.rpm) for hb in self.heartbeats]
+            ser["hb_data"] = hb_data
 
         # return
         return ser
@@ -515,13 +541,13 @@ class Ride(db.Model):
 
         return ride
 
-    def get_status(self):
+    def get_status(self, include_heartbeats=False):
 
         """
         Return Ride status
         """
 
-        return {"ride": self.serialize()}
+        return {"ride": self.serialize(include_heartbeats=include_heartbeats)}
 
     @classmethod
     def get_free_ride(cls):
@@ -679,20 +705,16 @@ class PybJobQueue(db.Model):
         """
 
         # create new job
-        job = PybJobQueue(
-            job_uuid=str(uuid.uuid4()),
-            cmds=cmds,
-            resp_idx=resp_idx,
-        )
+        job = PybJobQueue(job_uuid=str(uuid.uuid4()), cmds=cmds, resp_idx=resp_idx, status="queued")
         app.db.session.add(job)
         app.db.session.commit()
 
         # poll for other jobs to be complete
-        count = 0
+        timeout_start = time.time()
         while True:
 
             # if timeout, mark job as failed
-            if count > timeout:
+            if (time.time() - timeout_start) > timeout:
                 job.status = "failed"
                 app.db.session.add(job)
                 app.db.session.commit()
@@ -707,8 +729,7 @@ class PybJobQueue(db.Model):
 
             # else, continue to poll
             else:
-                time.sleep(1)
-                count += 1
+                time.sleep(0.1)
 
     @classmethod
     def stop_all_jobs(cls):

@@ -215,7 +215,7 @@ def create_app():
         ride.set_as_current()
 
         # serialize and return
-        return jsonify(ride.serialize())
+        return jsonify(ride.serialize(include_heartbeats=True))
 
     @app.route("/api/ride/<ride_uuid>", methods=["GET"])
     def ride_retrieve(ride_uuid):
@@ -234,7 +234,7 @@ def create_app():
             ride.set_as_current()
 
         # serialize and return
-        return jsonify(ride.serialize())
+        return jsonify(ride.serialize(include_heartbeats=True))
 
     @app.route("/api/ride/current", methods=["GET"])
     def ride_retrieve_current():
@@ -249,7 +249,7 @@ def create_app():
             raise app.InvalidUsage(f"no rides found, cannot return current", status_code=404)
 
         # serialize and return
-        return jsonify(ride.serialize())
+        return jsonify(ride.serialize(include_heartbeats=True))
 
     @app.route("/api/ride/current", methods=["PATCH"])
     def ride_current_update():

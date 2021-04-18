@@ -16,7 +16,10 @@ vcp = pyb.USB_VCP()
 
 
 def serial_response(response):
-    response_str = json.dumps(response) + "EOM"
+    try:
+        response_str = json.dumps(response) + "EOM"
+    except:
+        response_str = response
     vcp.write(response_str.encode())
 
 
@@ -35,11 +38,18 @@ r = vcp.recv(19, timeout=10000)  # what are these 19 characters!?
 pyb.delay(2000)
 lcd.simple_write("TBOS ready!", "c %s ms %s" % (str(len(r)), time_elapsed(t0)))
 
+for x in [2, 3, 4]:
+    pyb.LED(x).off()
+
 # main loop
 while True:
 
     # if anything in serial bus, parse
     if vcp.any() > 0:
+
+        # send nibble that working on request
+        vcp.write("BOM".encode())
+        pyb.delay(20)  # this allows the nibble listener time
 
         # debug
         t0 = time.ticks_ms()
@@ -68,16 +78,7 @@ while True:
             try:
                 request = json.loads(raw_input)
             except:
-                lcd.simple_write("ERROR: JSON", "")
-                pyb.delay(1000)
-                try:
-                    raw_input = raw_input.decode()
-                except:
-                    pass
-                lcd.simple_write(">> %s" % raw_input[:12], raw_input[12:])
-                pyb.delay(1000)
-                lcd.clear()
-                continue
+                raise Exception("could not parse input JSON")
 
             # if serial message is sent by pyboard, ignore
             if request.get("sender", None) == "pyboard":
@@ -91,28 +92,39 @@ while True:
                 l1 = request["lcd"]["l1"]
                 l2 = request["lcd"]["l2"]
 
+            # handle level adjustments
+            elif request.get("level", None) is not None:
+                pyb.LED(2).on()
+                rm = goto_level(
+                    request.get("level", None),
+                    request.get("lower_bound", 100),
+                    request.get("upper_bound", 3800),
+                    request.get("pwm", 60),
+                    request.get("sweep_delay", 0.006),
+                    request.get("settle_threshold", 10),
+                    debug=False,
+                )
+                pyb.LED(2).off()
+
+                # log
+                l1 = "level adjust"
+                l2 = "l:%s s:%s" % (str(int(rm["level"])), str(int(rm["current"])))
+
+                # update response
+                response.update({"request": request, "rm": rm})
+
+            # else, assume heartbeat for status
             else:
 
                 # tag as heartbeat
                 response["hb"] = True
 
-                # adjust level and/or get rm status
+                # get rm status
                 pyb.LED(2).on()
-                if request.get("level", None) is not None:
-                    rm = goto_level(
-                        request.get("level", None),
-                        request.get("lower_bound", 100),
-                        request.get("upper_bound", 3800),
-                        request.get("pwm", 60),
-                        request.get("sweep_delay", 0.006),
-                        request.get("settle_threshold", 10),
-                        debug=False,
-                    )
-                else:
-                    rm = rm_status(
-                        request.get("lower_bound", 100),
-                        request.get("upper_bound", 3800),
-                    )
+                rm = rm_status(
+                    request.get("lower_bound", 100),
+                    request.get("upper_bound", 3800),
+                )
                 pyb.LED(2).off()
 
                 # get rpm
@@ -129,7 +141,7 @@ while True:
 
         except Exception as e:
 
-            # write to LCD
+            # log error to LCD
             l1 = "ERROR: %s" % str(e)[:9]
             l2 = str(e)[9:]
 
@@ -148,4 +160,4 @@ while True:
     # toggle LEDs and delay
     for x in [2, 3, 4]:
         pyb.LED(x).off()
-    pyb.delay(10)
+    pyb.delay(100)
