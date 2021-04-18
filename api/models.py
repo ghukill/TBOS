@@ -18,7 +18,8 @@ from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 
 import pyboard
 from rshell.main import is_micropython_usb_device
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, ForeignKey
+from sqlalchemy.orm import relationship
 
 from .db import db
 from .exceptions import PybReplCmdError, PybReplRespError
@@ -419,6 +420,8 @@ class Ride(db.Model):
     completed = db.Column(db.Float, nullable=False, default=0.0)
     is_current = db.Column(db.Boolean, default=0, nullable=False)
 
+    heartbeats = relationship("Heartbeat", back_populates="ride")
+
     def set_as_current(self):
 
         """
@@ -466,6 +469,10 @@ class Ride(db.Model):
         if remaining < 0:
             remaining = 0
         ser["remaining"] = remaining
+
+        # TODO: parameterize if this fires
+        hb_data = [(hb.timestamp_added, hb.level, hb.rpm) for hb in self.heartbeats]
+        ser["hb_data"] = hb_data
 
         # return
         return ser
@@ -551,11 +558,20 @@ class Heartbeat(db.Model):
 
     hb_uuid = db.Column(db.String, primary_key=True, default=str(uuid.uuid4()))
     timestamp_added = db.Column(db.Integer, nullable=False, default=timestamp_now)
-    ride_uuid = db.Column(db.String, nullable=True)
+    ride_uuid = db.Column(db.String, ForeignKey("ride.ride_uuid"), nullable=True)
     data = db.Column(db.JSON, nullable=True)
+    level = db.Column(db.Integer, nullable=True)
+    rpm = db.Column(db.Float, nullable=True)
+
+    ride = relationship("Ride", back_populates="heartbeats")
 
     def save(self):
         try:
+
+            # attempt extract of rm.level and rpm.rpm
+            self.level = self.data.get("rm", {}).get("level", None)
+            self.rpm = self.data.get("rpm", {}).get("rpm", None)
+
             app.db.session.add(self)
             app.db.session.commit()
         except Exception as e:
@@ -759,12 +775,19 @@ class BikeSchema(SQLAlchemyAutoSchema):
 class RideSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = Ride
-        include_relationships = True
+        include_relationships = False
         load_instance = True
 
 
 class PybJobQueueSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = PybJobQueue
+        include_relationships = True
+        load_instance = True
+
+
+class HeartbeatSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Heartbeat
         include_relationships = True
         load_instance = True
