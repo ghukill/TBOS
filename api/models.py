@@ -626,6 +626,7 @@ class PybJobQueue(db.Model):
     resps = db.Column(db.JSON, nullable=True)
     resp_idx = db.Column(db.Integer, nullable=True)
     status = db.Column(db.String, default="queued", nullable=False)
+    priority = db.Column(db.Integer, nullable=True, default=1)
 
     @classmethod
     def count_running_jobs(cls):
@@ -744,6 +745,23 @@ class PybJobQueue(db.Model):
             app.db.session.add(job)
             app.db.session.commit()
         return len(all_jobs)
+
+    @classmethod
+    def get_next_queued(self):
+
+        """
+        Method to return the next queued job
+        """
+
+        # get next, ordered by priority and timestamp
+        next = (
+            PybJobQueue.query.filter(PybJobQueue.status == "queueud")
+            .order_by(PybJobQueue.priority.desc())
+            .order_by(PybJobQueue.timestamp_added.asc())
+            .first()
+        )
+
+        return next
 
 
 class LCD:

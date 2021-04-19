@@ -54,6 +54,16 @@ def recreate_db():
     print("creating tables")
     app.db.create_all()
 
+    # add unique index
+    app.db.session.execute(
+        """
+        create unique index if not exists
+            pyb_job_running_idx on pyb_job_queue (status)
+            where status = 'running'
+        """
+    )
+    app.db.session.commit()
+
     # insert Bikes
     print("inserting Bikes")
     debug_servo = Bike(
