@@ -19,7 +19,9 @@ from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 import pyboard
 from rshell.main import is_micropython_usb_device
 from sqlalchemy import asc, desc, ForeignKey
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship
+import sqlite3
 
 from .db import db
 from .exceptions import PybReplCmdError, PybReplRespError
@@ -647,7 +649,7 @@ class PybJobQueue(db.Model):
         if self.status != "queued":
             raise Exception(f"job status is {self.status}, skipping execution")
 
-        # mark as in_progress
+        # mark as running
         self.status = "running"
         app.db.session.commit()
 
@@ -725,8 +727,13 @@ class PybJobQueue(db.Model):
             if cls.count_running_jobs() == 0:
 
                 # execute job
-                response = job.execute(raise_exceptions=raise_exceptions)
-                return response
+                try:
+                    response = job.execute(raise_exceptions=raise_exceptions)
+                    return response
+                except IntegrityError as integrity_error:
+                    print(str(integrity_error))
+                    app.db.session.rollback()
+                    time.sleep(0.1)
 
             # else, continue to poll
             else:
