@@ -9,6 +9,7 @@ import uuid
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_migrate import Migrate
 
 from api.models import Bike, BikeSchema, LCD, PyboardClient, PybJobQueue, PybJobQueueSchema, Ride, RideSchema, Heartbeat
 from api.utils import parse_query_payload, tbos_state_clear
@@ -25,6 +26,9 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.init_app(app)
     app.db = db
+
+    # setup alembic migrations
+    migrate = Migrate(app, db)
 
     # wrap in CORS
     CORS(app)

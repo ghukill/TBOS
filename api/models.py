@@ -446,6 +446,7 @@ class Ride(db.Model):
     duration = db.Column(db.Float, nullable=False, default=30.0)
     completed = db.Column(db.Float, nullable=False, default=0.0)
     is_current = db.Column(db.Boolean, default=0, nullable=False)
+    program = db.Column(db.JSON, nullable=True)
 
     heartbeats = relationship("Heartbeat", back_populates="ride")
 
