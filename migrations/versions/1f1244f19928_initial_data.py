@@ -7,7 +7,7 @@ Create Date: 2021-04-23 22:15:25.440414
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.sql import table, column
+from sqlalchemy.sql import table
 
 # revision identifiers, used by Alembic.
 revision = "1f1244f19928"
