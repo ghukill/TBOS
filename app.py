@@ -165,6 +165,31 @@ def create_app():
             hb.save()
             print(f"heartbeat recorded elapsed: {time.time() - thb0}")
 
+            # check ride program, adjust level if needed
+            # TODO: move all this to Ride method...
+            mark = response.get("ride", {}).get("completed")
+            if mark is not None:
+                if ride.program is not None:
+                    print(f"checking ride program for mark: {mark}")
+
+                    # get current level
+                    level = response["rm"]["level"]
+
+                    # loop through program segments and see if currently within a segment
+                    for segment in ride.program:
+                        seg_level, seg_window = segment[0], segment[1]
+                        if mark >= seg_window[0] and mark < seg_window[1]:
+                            print(f"window match: {seg_window}")
+
+                            # check if level different
+                            # TODO: allow an override in a segment to "stick"
+                            if level != seg_level:
+                                print(f"adjusting level to match segment: {level} --> {seg_level}")
+
+                                # get bike and adjust level
+                                bike = Bike.current()
+                                adjust_response = bike.adjust_level(seg_level)
+
             # return
             print(f"heartbeat elapsed: {time.time()-t1}")
             return jsonify(response)
