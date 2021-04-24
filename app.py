@@ -230,12 +230,19 @@ def create_app():
         if duration is not None:
             duration = int(duration)
 
+        # handle random program
+        if payload.get("program", {}).get("random", False):
+            _p = payload["program"]
+            program = Ride.generate_random_program(
+                duration,
+                low=_p["random_low"],
+                high=_p["random_high"],
+            )
+        else:
+            program = None
+
         # create new Ride
-        ride = Ride(
-            ride_uuid=str(uuid.uuid4()),
-            name=payload.get("name", None),
-            duration=duration,
-        )
+        ride = Ride(ride_uuid=str(uuid.uuid4()), name=payload.get("name", None), duration=duration, program=program)
 
         # create
         ride.save()

@@ -578,6 +578,22 @@ class Ride(db.Model):
         # return
         return free_ride
 
+    @classmethod
+    def generate_random_program(cls, duration, low=1, high=20, segment_length_s=60):
+        """
+        Class method to generate a random program
+        """
+
+        # init program
+        program = []
+
+        # loop and create
+        for x in range(0, duration, segment_length_s):
+            program.append([random.randint(low, high), [x, (x + segment_length_s)]])
+
+        # return
+        return program
+
 
 class Heartbeat(db.Model):
 
