@@ -500,7 +500,7 @@ class Ride(db.Model):
 
         # include heartbeats data
         if include_heartbeats:
-            hb_data = [(hb.timestamp_added, hb.level, hb.rpm) for hb in self.heartbeats]
+            hb_data = [(hb.timestamp_added, hb.level, hb.rpm, hb.mark) for hb in self.heartbeats]
             ser["hb_data"] = hb_data
 
         # return
@@ -604,6 +604,7 @@ class Heartbeat(db.Model):
     hb_uuid = db.Column(db.String, primary_key=True, default=str(uuid.uuid4()))
     timestamp_added = db.Column(db.Integer, nullable=False, default=timestamp_now)
     ride_uuid = db.Column(db.String, ForeignKey("ride.ride_uuid"), nullable=True)
+    mark = db.Column(db.Integer, nullable=True)
     data = db.Column(db.JSON, nullable=True)
     level = db.Column(db.Integer, nullable=True)
     rpm = db.Column(db.Float, nullable=True)

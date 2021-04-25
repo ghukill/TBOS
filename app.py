@@ -161,7 +161,7 @@ def create_app():
 
             # record heartbeat
             thb0 = time.time()
-            hb = Heartbeat(hb_uuid=str(uuid.uuid4()), ride_uuid=ride.ride_uuid, data=response)
+            hb = Heartbeat(hb_uuid=str(uuid.uuid4()), ride_uuid=ride.ride_uuid, data=response, mark=ride.completed)
             hb.save()
             print(f"heartbeat recorded elapsed: {time.time() - thb0}")
 
