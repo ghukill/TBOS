@@ -237,6 +237,7 @@ def create_app():
                 duration,
                 low=_p["random_low"],
                 high=_p["random_high"],
+                segment_length_s=int(_p.get("random_segment_length", 60)),
             )
         else:
             program = None
