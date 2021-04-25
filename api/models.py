@@ -447,6 +447,7 @@ class Ride(db.Model):
     completed = db.Column(db.Float, nullable=False, default=0.0)
     is_current = db.Column(db.Boolean, default=0, nullable=False)
     program = db.Column(db.JSON, nullable=True)
+    last_segment = db.Column(db.JSON, nullable=True)
 
     heartbeats = relationship("Heartbeat", back_populates="ride")
 
@@ -593,6 +594,64 @@ class Ride(db.Model):
 
         # return
         return program
+
+    def handle_program_segment(self, response, bike):
+
+        """
+        Method to perform actions based on heartbeat of a ride, if a program exists
+
+        :param response: response from bike for hearbeat
+        :param bike: Bike instane
+        """
+
+        # extract mark
+        mark = response.get("ride", {}).get("completed")
+
+        # if program exists and mark is known
+        if self.program is not None and mark is not None:
+
+            print(f"checking ride program for mark: {mark}")
+
+            # get program segment
+            segment = self.get_program_segment(mark)
+
+            # get CURRENT level
+            cur_level = response["rm"]["level"]
+
+            # if current level != segment level, adjust
+            if cur_level != segment["level"]:
+                print(f"adjusting level to match segment: {cur_level} --> {segment['level']}")
+
+                # if new segment, adjust level (allows in-level manual adjusts to be sticky)
+                if segment["is_new"]:
+                    segment["adjust_level"] = bike.adjust_level(segment["level"])
+
+            # return segment
+            return segment
+
+        else:
+            return None
+
+    def get_program_segment(self, mark):
+
+        """
+        Extract segment from program
+        """
+
+        segment = {"num": None, "level": None, "window": None, "is_new": False}
+
+        for seg_num, _segment in enumerate(self.program):
+            seg_level, seg_window = _segment[0], _segment[1]
+            if mark >= seg_window[0] and mark < seg_window[1]:
+                print(f"segment match for mark: {mark} in {seg_window}")
+                segment.update({"num": seg_num, "level": seg_level, "window": seg_window})
+
+                # determine if new segment
+                if self.last_segment is None or segment["num"] != self.last_segment["num"]:
+                    segment["is_new"] = True
+
+        # return segment
+        return segment
 
 
 class Heartbeat(db.Model):

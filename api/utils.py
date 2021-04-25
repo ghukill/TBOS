@@ -59,6 +59,11 @@ def tbos_state_clear():
             update ride set is_current = 0
             """
         )
+        app.db.session.execute(
+            """
+            update ride set last_segment = NULL
+            """
+        )
     except Exception as e:
         print({"error": str(e), "traceback": traceback.format_exc()})
 

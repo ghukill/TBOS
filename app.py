@@ -137,9 +137,12 @@ def create_app():
             # init heartbeat
             response = {}
 
+            # get bike
+            bike = Bike.current()
+
             # get bike status
             tb0 = time.time()
-            response.update(Bike.current().get_status(raise_exceptions=True))
+            response.update(bike.get_status(raise_exceptions=True))
             print(f"bike status elapsed: {time.time()-tb0}")
 
             # get ride status
@@ -156,6 +159,11 @@ def create_app():
                 payload = parse_query_payload(request)
                 print(payload)
                 ride.completed = payload["localRide"]["completed"]
+
+                # handle program segment if program exists
+                segment = ride.handle_program_segment(response, bike)
+                ride.last_segment = segment
+
                 ride.save()
                 print(f"ride update elapsed: {time.time() - ta0}")
 
@@ -164,31 +172,6 @@ def create_app():
             hb = Heartbeat(hb_uuid=str(uuid.uuid4()), ride_uuid=ride.ride_uuid, data=response, mark=ride.completed)
             hb.save()
             print(f"heartbeat recorded elapsed: {time.time() - thb0}")
-
-            # check ride program, adjust level if needed
-            # TODO: move all this to Ride method...
-            mark = response.get("ride", {}).get("completed")
-            if mark is not None:
-                if ride.program is not None:
-                    print(f"checking ride program for mark: {mark}")
-
-                    # get current level
-                    level = response["rm"]["level"]
-
-                    # loop through program segments and see if currently within a segment
-                    for segment in ride.program:
-                        seg_level, seg_window = segment[0], segment[1]
-                        if mark >= seg_window[0] and mark < seg_window[1]:
-                            print(f"window match: {seg_window}")
-
-                            # check if level different
-                            # TODO: allow an override in a segment to "stick"
-                            if level != seg_level:
-                                print(f"adjusting level to match segment: {level} --> {seg_level}")
-
-                                # get bike and adjust level
-                                bike = Bike.current()
-                                adjust_response = bike.adjust_level(seg_level)
 
             # return
             print(f"heartbeat elapsed: {time.time()-t1}")
