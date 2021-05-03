@@ -14,39 +14,42 @@ from .inputs import Manager, Digital
 micropython.alloc_emergency_exception_buf(100)
 
 
+# bookkeeping
+pings_us = deque((), 4)
+pings = deque((), 2)
+
+def ping_iq_on():
+    pyb.LED(4).on()
+    pings_us.append(time.ticks_us())
+    pings.append(time.ticks_ms())
+
+def ping_iq_off():
+    pyb.LED(4).off()
+    pings_us.append(time.ticks_us())
+
+rpm_irq_mgr = Manager(
+    [
+        Digital("X8: hallsensor", hl_func=ping_iq_on, lh_func=ping_iq_off),
+    ],
+    timer_num=1,
+    poll_freq=960,
+)
+
+
 def get_rpm(timeout=3.5, verbose=False):
 
     """
     Calculate RPMs by counting pings
     """
 
-    # bookkeeping
-    pings_us = deque((), 4)
-    pings = deque((), 2)
+    # if not enough pings, return immediately
+    if len(pings) < 2:
+        rpm = 0
+        us_diffs = []
+        us_to_rpm_ratio = 0
 
-    def ping_iq_on():
-        pings_us.append(time.ticks_us())
-        pings.append(time.ticks_ms())
-
-    def ping_iq_off():
-        pings_us.append(time.ticks_us())
-
-    mgr = Manager(
-        [
-            Digital("X8: hallsensor", hl_func=ping_iq_on, lh_func=ping_iq_off),
-        ],
-        timer_num=1,
-        poll_freq=960,
-    )
-
-    t0 = time.time()
-    while len(pings_us) < 4:
-        if time.time() - t0 > timeout:
-            break
-        else:
-            continue
-
-    if len(pings_us) >= 4:
+    # else, calc rpm and return
+    else:
 
         # us_records
         us_diffs = []
@@ -62,11 +65,6 @@ def get_rpm(timeout=3.5, verbose=False):
 
         # sensor time to rpm ratio
         us_to_rpm_ratio = sum(us_diffs) / rpm
-
-    else:
-        us_diffs = []
-        rpm = 0
-        us_to_rpm_ratio = 0
 
     # prepare response
     if verbose:

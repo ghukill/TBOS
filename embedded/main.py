@@ -9,7 +9,7 @@ import pyb
 
 from embedded.lcd import init_lcd
 from embedded.resistance_motor import goto_level, rm_status
-from embedded.rpm_sensor import get_rpm
+from embedded.rpm_sensor import rpm_irq_mgr, get_rpm
 
 
 vcp = pyb.USB_VCP()
