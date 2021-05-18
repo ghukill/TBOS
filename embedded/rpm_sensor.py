@@ -3,7 +3,6 @@ RPM sensor
 """
 
 from collections import deque
-import itertools
 import time
 
 import micropython
@@ -20,7 +19,14 @@ pings_us = deque((), 12)
 pings = deque((), 6)
 prev_values_num = 3
 prev_values = deque((), prev_values_num)
-prev_values.extend(itertools.repeat((0, [], 0), prev_values_num))  # stock with base values
+def set_prev_values(repeat_tuple):
+
+    """
+    Update stack of previous values
+    """
+
+    prev_values.extend([repeat_tuple for x in range(0, prev_values_num)])
+set_prev_values((0, [], 0))  # stock with base values
 
 
 def ping_iq_on():
@@ -41,14 +47,6 @@ rpm_irq_mgr = Manager(
     timer_num=1,
     poll_freq=960,
 )
-
-def set_prev_values(repeat_tuple):
-
-    """
-    Update stack of previous values
-    """
-
-    prev_values.extend(itertools.repeat(repeat_tuple, prev_values_num))
 
 def get_rpm(timeout=3.5, verbose=False):
 
