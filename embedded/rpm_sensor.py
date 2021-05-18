@@ -19,13 +19,14 @@ pings_us = deque((), 12)
 pings = deque((), 6)
 prev_values_num = 3
 prev_values = deque((), prev_values_num)
-def set_prev_values(repeat_tuple):
 
+def set_prev_values(repeat_tuple):
     """
     Update stack of previous values
     """
+    for x in range(0, prev_values_num):
+        prev_values.append(repeat_tuple)
 
-    prev_values.extend([repeat_tuple for x in range(0, prev_values_num)])
 set_prev_values((0, [], 0))  # stock with base values
 
 
@@ -39,6 +40,12 @@ def ping_iq_off():
     pyb.LED(4).off()
     pings_us.append(time.ticks_us())
 
+def clear_queue(d):
+    while True:
+        try:
+            _ = d.popleft()
+        except:
+            break
 
 rpm_irq_mgr = Manager(
     [
@@ -73,8 +80,8 @@ def get_rpm(timeout=3.5, verbose=False):
         # if none, assume stagnant for awhile; clear all
         else:
             set_prev_values((0, [], 0))
-            pings_us.clear()
-            pings.clear()
+            clear_queue(pings_us)
+            clear_queue(pings)
             rpm = 0
             us_diffs = []
             us_to_rpm_ratio = 0
