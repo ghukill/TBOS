@@ -6,7 +6,7 @@ import traceback
 
 import flask
 
-from api.models import LCD, PybJobQueue
+from api.models import LCD, PybJobQueue, Bike
 
 app = flask.current_app
 
@@ -50,6 +50,10 @@ def tbos_state_clear():
         )
     except Exception as e:
         print({"error": str(e), "traceback": traceback.format_exc()})
+
+    # print current bike
+    current_bike = Bike.current()
+    print(f"Current bike: {current_bike}")
 
     # clearing current rides
     print("clearing current ride...")
