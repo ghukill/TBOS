@@ -102,6 +102,7 @@ while True:
                     request.get("pwm", 60),
                     request.get("sweep_delay", 0.006),
                     request.get("settle_threshold", 10),
+                    match_c1_levels=request.get("match_c1_levels", True),
                     debug=False,
                 )
                 pyb.LED(2).off()

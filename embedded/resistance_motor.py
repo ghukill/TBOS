@@ -20,6 +20,9 @@ ch.pulse_width_percent(0)
 in1.low()
 in2.low()
 
+# c1 level padding
+c1_level_pads = [0, 40, 103, 181, 168, 189, 212, 233, 255, 266, 296, 356, 373, 391, 410, 407, 358, 350, 244, 0]
+
 
 def read_position_sensor(num_reads=5, read_delay=0.05):
 
@@ -44,7 +47,9 @@ def determine_step(lower_bound, upper_bound, step_num=20):
     return round(((upper_bound - lower_bound) - 1) / step_num)
 
 
-def goto_level(level, lower_bound, upper_bound, pwm_level, sweep_delay, settled_threshold, debug=False):
+def goto_level(
+    level, lower_bound, upper_bound, pwm_level, sweep_delay, settled_threshold, match_c1_levels=True, debug=False
+):
 
     """
     :param pwm_level: percentage of input 9v (9v @ 50% = 5.69v)
@@ -61,6 +66,10 @@ def goto_level(level, lower_bound, upper_bound, pwm_level, sweep_delay, settled_
 
     # determine target
     target = upper_bound - ((level - 1) * step)
+
+    # match c1 levels
+    if match_c1_levels:
+        target += c1_level_pads[level - 1]
 
     prev_diff = 0
     loop_count = 0
