@@ -366,6 +366,7 @@ class Bike(db.Model):
 
             # get explicit target is present
             explicit_target = self.config["rm"].get("explicit_targets")[level]
+            print(f"EXPLICIT TARGET: {explicit_target}")
 
             # send job
             response = PybJobQueue.create_and_run_job(
