@@ -124,11 +124,38 @@ def rm_status(lower_bound, upper_bound):
     Function to return status
     """
 
+    # known levels
+    explicit_targets = [
+        3773,
+        3662,
+        3574,
+        3500,
+        3336,
+        3206,
+        3077,
+        2947,
+        2818,
+        2677,
+        2556,
+        2464,
+        2330,
+        2197,
+        2064,
+        1910,
+        1710,
+        1550,
+        1293,
+        897,
+    ]
+
     # get current reading
     current = read_position_sensor()
 
     # calculate level
-    step = determine_step(lower_bound, upper_bound)
-    level = round((upper_bound - current) / step) + 1
+    # step = determine_step(lower_bound, upper_bound)
+    # level = round((upper_bound - current) / step) + 1
+
+    # calculate level by known targets
+    level = min(range(len(explicit_targets)), key=lambda i: abs(explicit_targets[i] - current))
 
     return {"level": level, "current": current}

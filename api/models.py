@@ -354,7 +354,7 @@ class Bike(db.Model):
         Adjust resistance level
         """
 
-        if not 0 <= level <= 20:
+        if not 0 < level <= 20:
             raise Exception(f"level {level} is not between 0 to 20")
 
         # create and run job
