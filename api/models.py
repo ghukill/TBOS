@@ -365,7 +365,7 @@ class Bike(db.Model):
         else:
 
             # get explicit target is present
-            explicit_target = self.config["rm"].get("explicit_targets")[level]
+            explicit_target = self.config["rm"].get("explicit_targets")[level - 1]
             print(f"EXPLICIT TARGET: {explicit_target}")
 
             # send job
