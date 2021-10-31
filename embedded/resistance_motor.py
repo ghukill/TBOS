@@ -44,7 +44,9 @@ def determine_step(lower_bound, upper_bound, step_num=20):
     return round(((upper_bound - lower_bound) - 1) / step_num)
 
 
-def goto_level(level, lower_bound, upper_bound, pwm_level, sweep_delay, settled_threshold, debug=False):
+def goto_level(
+    level, lower_bound, upper_bound, pwm_level, sweep_delay, settled_threshold, explicit_target, debug=False
+):
 
     """
     :param pwm_level: percentage of input 9v (9v @ 50% = 5.69v)
@@ -60,7 +62,10 @@ def goto_level(level, lower_bound, upper_bound, pwm_level, sweep_delay, settled_
     step = determine_step(lower_bound, upper_bound)
 
     # determine target
-    target = upper_bound - ((level - 1) * step)
+    if explicit_target is not None:
+        target = explicit_target
+    else:
+        target = upper_bound - ((level - 1) * step)
 
     prev_diff = 0
     loop_count = 0
@@ -108,6 +113,7 @@ def goto_level(level, lower_bound, upper_bound, pwm_level, sweep_delay, settled_
         "level": level,
         "current": current,
         "target": target,
+        "explicit_target": explicit_target,
     }
     return response
 

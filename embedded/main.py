@@ -102,6 +102,7 @@ while True:
                     request.get("pwm", 60),
                     request.get("sweep_delay", 0.006),
                     request.get("settle_threshold", 10),
+                    request.get("explicit_target", None),
                     debug=False,
                 )
                 pyb.LED(2).off()

@@ -363,6 +363,11 @@ class Bike(db.Model):
             time.sleep(1)
             response = self._generate_virtual_status(level)
         else:
+
+            # get explicit target is present
+            explicit_target = self.config["rm"].get("explicit_targets")[level]
+
+            # send job
             response = PybJobQueue.create_and_run_job(
                 [
                     {
@@ -372,6 +377,7 @@ class Bike(db.Model):
                         "pwm": self._config.rm.pwm_level,
                         "sweep_delay": self._config.rm.sweep_delay,
                         "settle_threshold": self._config.rm.settled_threshold,
+                        "explicit_target": explicit_target,
                     }
                 ],
                 resp_idx=0,

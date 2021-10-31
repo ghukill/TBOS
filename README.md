@@ -30,16 +30,22 @@ pip install -r requirements.txt
 
 #### Create Database via Flask shell
 
-Start flask shell:
+Migrations are run via flask-migrate
+
+Help commands:
 ```bash
 source venv/bin/activate
-flask shell
+flask db --help
 ```
 
-Create tables:
-```python
-from api.utils import recreate_db
-recreate_db()
+history
+```bash
+flask db history
+4a1ce83f57dd -> b6ff6a01eca6 (head), add last segment
+874e571003f9 -> 4a1ce83f57dd, add timestamp mark to heartbeat
+1f1244f19928 -> 874e571003f9, sample program ride
+acc54e65be2a -> 1f1244f19928, initial data
+<base> -> acc54e65be2a, first migration
 ```
 
 #### Setup systemctl service
