@@ -156,6 +156,6 @@ def rm_status(lower_bound, upper_bound):
     # level = round((upper_bound - current) / step) + 1
 
     # calculate level by known targets
-    level = min(range(len(explicit_targets)), key=lambda i: abs(explicit_targets[i] - current))
+    level = min(range(len(explicit_targets)), key=lambda i: abs(explicit_targets[i] - current)) + 1
 
     return {"level": level, "current": current}
