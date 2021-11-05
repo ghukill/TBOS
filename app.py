@@ -78,7 +78,10 @@ def create_app():
 
     # init
     with app.app_context():
-        tbos_state_clear()
+        try:
+            tbos_state_clear()
+        except Exception as e:
+            pass
 
     ######################################################################
     # Debug Routes
@@ -402,6 +405,13 @@ def create_app():
         """
 
         return jsonify(PybJobQueueSchema(many=True).dump(PybJobQueue.query.all()))
+
+    ######################################################################
+    # GUI Routes
+    ######################################################################
+    @app.route("/gui", methods=["GET"])
+    def gui_index():
+        return jsonify({"msg": "hello world!"})
 
     # return Flask app instance
     return app
