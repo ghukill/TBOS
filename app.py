@@ -412,11 +412,7 @@ def create_app():
     @app.route("/gui", methods=["GET"])
     def gui_index():
 
-        # get current bike
-        bike = Bike.current()
-
-        # prepare variables
-        f = {"bike": bike}
+        f = {}
 
         return render_template("index.html", title="TBOS", f=f, v=str(uuid.uuid4()))
 
@@ -430,6 +426,17 @@ def create_app():
         f = {"rides": rides}
 
         return render_template("rides.html", title="TBOS", f=f, v=str(uuid.uuid4()))
+
+    @app.route("/gui/bike", methods=["GET"])
+    def gui_bike():
+
+        # get current bike
+        bike = Bike.current()
+
+        # prepare variables
+        f = {"bike": bike}
+
+        return render_template("bike.html", title="TBOS", f=f, v=str(uuid.uuid4()))
 
     # return Flask app instance
     return app

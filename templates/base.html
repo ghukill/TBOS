@@ -1,11 +1,28 @@
 <html data-theme="dark">
 <head>
-    <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@latest/css/pico.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
-    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="{{url_for('static', filename='pico.min.css', version=v)}}">
+    <script src="{{url_for('static', filename='node_modules/vue/dist/vue.js', version=v)}}"></script>
+    <script src="{{url_for('static', filename='node_modules/axios/dist/axios.js', version=v)}}"></script>
 </head>
 <body>
+<main id="vm" class="container">
+    <nav>
+        <ul>
+            <li><a href="/gui"><span class="nav_title">TBOS.2</span></a></li>
+        </ul>
+        <ul>
+            <li><a href="/gui/rides">Rides</a></li>
+            <li><a href="/gui/bike">Bike</a></li>
+        </ul>
+    </nav>
     {% block content %}{% endblock %}
+</main>
 </body>
 <script src="{{url_for('static', filename='base.js', version=v)}}"></script>
 </html>
+<style>
+    .nav_title {
+        font-weight: bold;
+        font-size: 200%;
+    }
+</style>

@@ -1,56 +1,55 @@
 {% extends "base.html" %}
 {% block content %}
-    <main id="vm" class="container">
-        <div>
-            <h1>Rides</h1>
-        </div>
-        <div>
-            <details> <!-- remove open to close -->
-                <summary>Hey boss, new ride please...</summary>
-                <form>
+<div>
+    <h2>
+        New Ride
+    </h2>
+    <details> <!-- remove open to close -->
+        <summary>Hey boss, new ride please...</summary>
+        <form>
 
-                    <!-- Grid -->
-                    <div class="grid">
-                        <!-- Markup example 1: input is inside label -->
-                        <label for="name">
-                            Ride Name
-                            <input type="text" id="name" name="name" placeholder="Boss ride, TBOS style" required>
-                        </label>
-                    </div>
+            <!-- Grid -->
+            <div class="grid">
+                <!-- Markup example 1: input is inside label -->
+                <label for="name">
+                    Ride Name
+                    <input type="text" id="name" name="name" placeholder="Boss ride, TBOS style" required>
+                </label>
+            </div>
 
-                    <!-- Markup example 2: input is after label -->
-                    <fieldset>
-                        <label for="random">
-                            <input type="checkbox" id="random" name="random" role="switch">
-                            Random
-                        </label>
-                    </fieldset>
+            <!-- Markup example 2: input is after label -->
+            <fieldset>
+                <label for="random">
+                    <input type="checkbox" id="random" name="random" role="switch">
+                    Random
+                </label>
+            </fieldset>
 
-                    <!-- Button -->
-                    <button type="submit">Make it so.</button>
+            <!-- Button -->
+            <button type="submit">Make it so.</button>
 
-                </form>
-            </details>
-        </div>
-        <div>
-            <table>
-                <thead>
-                <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Duration</th>
-                    <th scope="col">Program</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for ride in f.rides %}
-                    <tr>
-                        <th scope="row">{{ ride.name }}</th>
-                        <td>{{ ride.duration }}</td>
-                        <td><code>{{ ride.program }}</code></td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </main>
+        </form>
+    </details>
+</div>
+<div>
+    <h2>Ride History</h2>
+    <table>
+        <thead>
+        <tr>
+            <th scope="col">Name</th>
+            <th scope="col">Duration</th>
+            <th scope="col">Program</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for ride in f.rides %}
+        <tr>
+            <th scope="row">{{ ride.name }}</th>
+            <td>{{ ride.duration }}</td>
+            <td><code>{{ ride.program }}</code></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
