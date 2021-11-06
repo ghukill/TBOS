@@ -7,7 +7,7 @@ import time
 import traceback
 import uuid
 
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect
 from flask_cors import CORS
 from flask_migrate import Migrate
 
@@ -426,6 +426,48 @@ def create_app():
         f = {"rides": rides}
 
         return render_template("rides.html", title="TBOS", f=f, v=str(uuid.uuid4()))
+
+    @app.route("/gui/rides", methods=["POST"])
+    def gui_ride_create():
+
+        print("creating new ride")
+
+        # get input
+        payload = request.form
+
+        # handle duration
+        duration = int(payload.get("duration", 30)) * 60
+
+        # handle random program
+        random = {"on": True, "off": False}[payload.get("random", "on")]
+        if random:
+            program = Ride.generate_random_program(
+                duration,
+                low=int(payload.get("level_low", 1)),
+                high=int(payload.get("level_high", 20)),
+                segment_length_s=int(payload.get("segment_length", 60)),
+            )
+        else:
+            program = None
+
+        # create new Ride
+        ride = Ride(ride_uuid=str(uuid.uuid4()), name=payload.get("name", None), duration=duration, program=program)
+
+        # create and set as current
+        ride.save()
+        ride.set_as_current()
+
+        # redirect
+        return redirect(f"/gui/ride/{ride.ride_uuid}")
+
+    @app.route("/gui/ride/<ride_uuid>", methods=["GET"])
+    def gui_ride(ride_uuid):
+
+        ride = Ride.query.get(ride_uuid)
+
+        f = {"ride": ride}
+
+        return render_template("ride.html", title="TBOS", f=f, v=str(uuid.uuid4()))
 
     @app.route("/gui/bike", methods=["GET"])
     def gui_bike():

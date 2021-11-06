@@ -4,29 +4,38 @@
     <h2>
         New Ride
     </h2>
-    <details> <!-- remove open to close -->
-        <summary>Hey boss, new ride please...</summary>
-        <form>
+    <details open>
+        <summary>Create Random Ride</summary>
+        <form action="/gui/rides" method="POST">
 
-            <!-- Grid -->
             <div class="grid">
-                <!-- Markup example 1: input is inside label -->
                 <label for="name">
                     Ride Name
                     <input type="text" id="name" name="name" placeholder="Boss ride, TBOS style" required>
                 </label>
             </div>
 
-            <!-- Markup example 2: input is after label -->
-            <fieldset>
+            <div class="grid">
                 <label for="random">
-                    <input type="checkbox" id="random" name="random" role="switch">
+                    <input type="checkbox" id="random" name="random" role="switch" checked>
                     Random
                 </label>
-            </fieldset>
+                <label for="level_low">
+                    Lowest Level
+                    <input type="text" id="level_low" name="level_low" placeholder="1" value="1" required>
+                </label>
+                <label for="level_high">
+                    Highest Level
+                    <input type="text" id="level_high" name="level_high" placeholder="20" value="20" required>
+                </label>
+                <label for="segment_length">
+                    Segment Length
+                    <input type="text" id="segment_length" name="segment_length" placeholder="60" value="60" required>
+                </label>
+            </div>
 
             <!-- Button -->
-            <button type="submit">Make it so.</button>
+            <button type="submit">Get it!</button>
 
         </form>
     </details>
@@ -37,6 +46,7 @@
         <thead>
         <tr>
             <th scope="col">Name</th>
+            <th scope="col">Date</th>
             <th scope="col">Duration</th>
             <th scope="col">Program</th>
         </tr>
@@ -45,7 +55,8 @@
         {% for ride in f.rides %}
         <tr>
             <th scope="row">{{ ride.name }}</th>
-            <td>{{ ride.duration }}</td>
+            <td>{{ ride.date_start.strftime("%a, %d.%m.%Y") }}</td>
+            <td>{{ ride.duration / 60 }}m</td>
             <td><code>{{ ride.program }}</code></td>
         </tr>
         {% endfor %}
