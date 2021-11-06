@@ -1,8 +1,24 @@
 <html data-theme="dark">
 <head>
-    <link rel="stylesheet" href="{{url_for('static', filename='pico.min.css', version=v)}}">
-    <script src="{{url_for('static', filename='node_modules/vue/dist/vue.js', version=v)}}"></script>
-    <script src="{{url_for('static', filename='node_modules/axios/dist/axios.js', version=v)}}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='pico.min.css', version=v) }}">
+    <script src="{{ url_for('static', filename='node_modules/vue/dist/vue.js', version=v) }}"></script>
+    <script src="{{ url_for('static', filename='node_modules/axios/dist/axios.js', version=v) }}"></script>
+    <style>
+        .nav_title {
+            font-weight: bold;
+            font-size: 200%;
+        }
+
+        .red_button {
+            background-color: red;
+            border-color: red;
+        }
+
+        .green_button {
+            background-color: green;
+            border-color: green;
+        }
+    </style>
 </head>
 <body>
 <main id="vm" class="container">
@@ -18,11 +34,6 @@
     {% block content %}{% endblock %}
 </main>
 </body>
-<script src="{{url_for('static', filename='base.js', version=v)}}"></script>
+<script type="module" src="{{ url_for('static', filename='base.js', version=v) }}"></script>
+{% block page_script %}{% endblock %}
 </html>
-<style>
-    .nav_title {
-        font-weight: bold;
-        font-size: 200%;
-    }
-</style>
