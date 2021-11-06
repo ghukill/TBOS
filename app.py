@@ -7,7 +7,7 @@ import time
 import traceback
 import uuid
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from flask_migrate import Migrate
 
@@ -411,7 +411,25 @@ def create_app():
     ######################################################################
     @app.route("/gui", methods=["GET"])
     def gui_index():
-        return jsonify({"msg": "hello world!"})
+
+        # get current bike
+        bike = Bike.current()
+
+        # prepare variables
+        f = {"bike": bike}
+
+        return render_template("index.html", title="TBOS", f=f, v=str(uuid.uuid4()))
+
+    @app.route("/gui/rides", methods=["GET"])
+    def gui_rides():
+
+        # get current bike
+        rides = Ride.query.order_by(Ride.date_start).all()
+
+        # prepare variables
+        f = {"rides": rides}
+
+        return render_template("rides.html", title="TBOS", f=f, v=str(uuid.uuid4()))
 
     # return Flask app instance
     return app
