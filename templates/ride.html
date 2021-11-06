@@ -1,6 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
-<div>
-    <h2>Ride: <code>{{ f.ride.name }}</code></h2>
-</div>
+    <div>
+        <h2>Ride: <code>{{ f.ride.name }}</code></h2>
+    </div>
+    <script>
+        setInterval(() => {
+            axios.get('/api/heartbeat')
+                .then(response => {
+                    console.log(response.data)
+                })
+                .catch(error => console.error(error));
+        }, 1000)
+    </script>
 {% endblock %}

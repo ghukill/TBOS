@@ -54,7 +54,7 @@
         <tbody>
         {% for ride in f.rides %}
         <tr>
-            <th scope="row">{{ ride.name }}</th>
+            <th scope="row"><a href="/gui/ride/{{ ride.ride_uuid }}">{{ ride.name }}<a/></th>
             <td>{{ ride.date_start.strftime("%a, %d.%m.%Y") }}</td>
             <td>{{ ride.duration / 60 }}m</td>
             <td><code>{{ ride.program }}</code></td>
