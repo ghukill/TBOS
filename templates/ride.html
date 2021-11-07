@@ -20,6 +20,14 @@
                 <td>Completed:</td>
                 <td><code>{|{ makePrettyTime(localCompleted) }|} ({|{ percentComplete }|}%)</code></td>
             </tr>
+            <tr>
+                <td>Level:</td>
+                <td>target: <code>{|{ bike.level }|}</code>, actual: <code>{|{ bike.reported.rm.level }|} [{|{ bike.reported.rm.current }|}]</code></td>
+            </tr>
+            <tr>
+                <td>RPM:</td>
+                <td><code>{|{ bike.reported.rpm.rpm }|}</code></td>
+            </tr>
             </tbody>
         </table>
     </div>
@@ -42,23 +50,27 @@
         var data = {
             localCompleted: {{ f.ride.completed }},
             heartbeatInterval: null,
+            bike: {
+                level: null,
+                reported: {rm: {level: null, current: null}, rpm: {rpm: null}}
+            },
             charts: {
                 level: {
                     data: {
                         labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
                         datasets: [
-                        {
-                            label: 'goober',
-                            data: [5, 5, 7, 5, 3, 5],
-                            borderColor:'rgba(255,255,255,0.7)',
-                            borderWidth: 1
-                        },
-                        {
-                            label: 'tronic',
-                            data: [4, 2, 7, 10, 3, 1],
-                            borderColor:'rgba(255,120,255,0.7)',
-                            borderWidth: 1
-                        }]
+                            {
+                                label: 'goober',
+                                data: [5, 5, 7, 5, 3, 5],
+                                borderColor: 'rgba(255,255,255,0.7)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'tronic',
+                                data: [4, 2, 7, 10, 3, 1],
+                                borderColor: 'rgba(255,120,255,0.7)',
+                                borderWidth: 1
+                            }]
                     },
                     chart: null
                 }
@@ -87,6 +99,16 @@
                         axios.post('/api/heartbeat', {"localRide": {"completed": this.localCompleted}})
                             .then(response => {
                                 console.log(response.data)
+
+                                // update reported
+                                this.bike.reported.rm.level = response.data.rm.level
+                                this.bike.reported.rm.current = response.data.rm.current
+                                this.bike.reported.rpm.rpm = response.data.rpm.rpm
+
+                                // set initial level from first heartbeat
+                                if (this.bike.level == null) {
+                                    this.bike.level = this.bike.reported.rm.level
+                                }
                             })
                             .catch(error => console.error(error));
                     }, 1000);
