@@ -2,5 +2,38 @@
 {% block content %}
 <div>
     <p>Current bike: <code>{{ f.bike.name }}</code></p>
+    <p><pre><code>{|{ bikeJson }|}</code></pre></p>
 </div>
+{% endblock %}
+{% block page_script %}
+    <script type="module">
+
+        // set data
+        var data = {
+            bikeJson:'loading...'
+        }
+
+        // create Vue
+        var vm = new Vue({
+            el: '#vm',
+            data: data,
+            delimiters: ['{|{', '}|}'],
+            computed: {
+
+            },
+            methods: {
+                getBikeStatus: function () {
+                    axios.get(`/api/bike/status`)
+                        .then(response => {
+                            console.log(response.data)
+                            this.bikeJson = response.data
+                        })
+                }
+            },
+            mounted: function () {
+                this.getBikeStatus();
+            }
+        })
+
+    </script>
 {% endblock %}
