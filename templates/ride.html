@@ -7,7 +7,9 @@
             <tr>
                 <td>Actions:</td>
                 <td><a role="button" style="background-color: green; border-color: green;" @click="startApiHeartbeat()">Start</a>
-                    <a style="background-color: red; border-color: red;" role="button" @click="stopApiHeartbeat()">Stop</button>
+                    <a style="background-color: red; border-color: red;" role="button"
+                       @click="stopApiHeartbeat()">Stop</a>
+                    <a @click="updateChart()" role="button">GRAPH</a>
                 </td>
             </tr>
             <tr>
@@ -15,7 +17,7 @@
                 <td><code>{|{ makePrettyTime({{ f.ride.duration }}) }|}</code></td>
             </tr>
             <tr>
-                <td @click="updateChart()">Completed:</td>
+                <td>Completed:</td>
                 <td><code>{|{ makePrettyTime(localCompleted) }|} ({|{ percentComplete }|}%)</code></td>
             </tr>
             </tbody>
@@ -34,37 +36,33 @@
     <script type="module">
 
         // imports
-        import { makePrettyTime } from '{{ url_for('static', filename='index.js') }}';
+        import {makePrettyTime} from '{{ url_for('static', filename='index.js') }}';
 
         // set data
         var data = {
             localCompleted: {{ f.ride.completed }},
             heartbeatInterval: null,
-            chartData:{
-                labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-                datasets: [{
-                    label: '# of Votes',
-                    data: [12, 19, 3, 5, 2, 3],
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.2)',
-                        'rgba(54, 162, 235, 0.2)',
-                        'rgba(255, 206, 86, 0.2)',
-                        'rgba(75, 192, 192, 0.2)',
-                        'rgba(153, 102, 255, 0.2)',
-                        'rgba(255, 159, 64, 0.2)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)',
-                        'rgba(255, 159, 64, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            chart:null
+            charts: {
+                level: {
+                    data: {
+                        labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+                        datasets: [
+                        {
+                            label: 'goober',
+                            data: [5, 5, 7, 5, 3, 5],
+                            borderColor:'rgba(255,255,255,0.7)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'tronic',
+                            data: [4, 2, 7, 10, 3, 1],
+                            borderColor:'rgba(255,120,255,0.7)',
+                            borderWidth: 1
+                        }]
+                    },
+                    chart: null
+                }
+            }
         }
 
         // create Vue
@@ -72,18 +70,19 @@
             el: '#vm',
             data: data,
             delimiters: ['{|{', '}|}'],
-            computed:{
-                percentComplete(){
+            computed: {
+                percentComplete() {
                     return Math.floor((this.localCompleted / {{ f.ride.duration }}) * 100);
+                },
+                chartLevelData() {
+                    return this.charts.level.data;
                 }
             },
             methods: {
                 startApiHeartbeat: function () {
                     this.heartbeatInterval = setInterval(() => {
-
                         // increment completed
                         this.localCompleted += 1;
-
                         // get heartbeat
                         axios.post('/api/heartbeat', {"localRide": {"completed": this.localCompleted}})
                             .then(response => {
@@ -98,27 +97,23 @@
                 makePrettyTime(s) {
                     return makePrettyTime(s);
                 },
-                createChart(){
-                    const ctx = document.getElementById('myChart').getContext('2d');
-                    this.chart = new Chart(ctx, {
-                        type: 'line',
-                        data: this.chartData,
-                        options: {
-                            scales: {
-                                y: {
-                                    beginAtZero: true
-                                }
-                            },
-                            responsive:true
+                createChart() {
+                    this.charts.level.chart = new Chart(
+                        document.getElementById('myChart').getContext('2d'),
+                        {
+                            type: 'line',
+                            data: this.chartLevelData,
+                            options: {
+                                responsive: true
+                            }
                         }
-                    });
+                    )
                 },
-                updateChart(){
-                    this.chart.update();
+                updateChart() {
+                    this.charts.level.chart.update();
                 }
             },
             mounted: function () {
-                // this.startApiHeartbeat();
                 this.createChart();
             }
         })
