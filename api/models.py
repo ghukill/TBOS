@@ -660,6 +660,44 @@ class Ride(db.Model):
         # return segment
         return segment
 
+    def get_full_level_data(self):
+
+        """
+        Return program and recorded levels by second
+
+        :return: [(program_level, recorded_level)], where index of list is second
+        """
+
+        t0 = time.time()
+
+        # init output
+        output = []
+
+        # handle no program
+        if self.program is None:
+            output.extend([[None, None] for _ in range(0, len(self.heartbeats))])
+
+        # else, loop through segments and extend to per second
+        else:
+            output = []
+            for segment in self.program:
+                output.extend([[segment[0], None] for _ in range(segment[1][0], segment[1][1])])
+
+        # interleave heartbeats
+        for hb in self.heartbeats:
+            output[hb.mark - 1][1] = hb.level
+
+        print(f"full level data elapsed: {time.time()-t0}")
+        return output
+
+    def get_bucketed_level_data(self, buckets=60):
+
+        """
+        Bucket level data to provide n buckets of data
+        """
+
+        pass
+
 
 class Heartbeat(db.Model):
 

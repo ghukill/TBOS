@@ -64,14 +64,16 @@
                             {
                                 label: 'program',
                                 data: [],
-                                borderColor: 'rgba(255,255,255,0.7)',
-                                borderWidth: 1
+                                borderColor: 'deeppink',
+                                borderWidth: 2
                             },
                             {
                                 label: 'recorded',
                                 data: [],
-                                borderColor: 'rgba(255,120,255,0.7)',
-                                borderWidth: 1
+                                borderColor: 'rgba(0,255,0,0.7)',
+                                backgroundColor: 'rgba(0,255,0,0.3)',
+                                borderWidth: 1,
+                                fill: true
                             }]
                     },
                     chart: null
@@ -142,7 +144,28 @@
                             type: 'line',
                             data: this.chartLevelData,
                             options: {
-                                responsive: true
+                                responsive: true,
+                                animation: {
+                                    duration: 0
+                                },
+                                elements: {
+                                    point: {
+                                        radius: 0,
+                                    },
+                                },
+                                scales: {
+                                    xAxes: [{
+                                        display: false, // this will remove all the x-axis grid lines
+                                    }],
+                                    yAxes: [{
+                                        ticks: {
+                                            beginAtZero: true,
+                                            steps: 20,
+                                            stepValue: 1,
+                                            max: 20,
+                                        },
+                                    }],
+                                }
                             }
                         }
                     )

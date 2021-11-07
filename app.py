@@ -178,19 +178,23 @@ def create_app():
             print(f"heartbeat recorded elapsed: {time.time() - thb0}")
 
             # prepare chart data
-            labels = [str(x) for x in range(0, 20)]
+            ride_data = ride.get_full_level_data()
+            labels = [f"{str(x)}s" for x in range(1, len(ride_data) + 1)]
             datasets = [
                 {
                     "label": "program",
-                    "borderColor": f"rgba({random.randint(0,255)},{random.randint(0,255)},{random.randint(0,255)},0.7)",
-                    "borderWidth": 1,
-                    "data": [random.randint(1, 21) for x in range(0, 20)],
+                    "borderColor": "deeppink",
+                    "borderWidth": 4,
+                    "data": [n[0] for n in ride_data],
+                    "fill": False,
                 },
                 {
                     "label": "recorded",
-                    "borderColor": f"rgba({random.randint(0,255)},{random.randint(0,255)},{random.randint(0,255)},0.7)",
+                    "borderColor": "rgba(0,255,0,0.7)",
+                    "backgroundColor": "rgba(0,255,0,0.3)",
                     "borderWidth": 1,
-                    "data": [random.randint(1, 21) for x in range(0, 20)],
+                    "data": [n[1] for n in ride_data],
+                    "fill": True,
                 },
             ]
             response["chart_data"] = {"labels": labels, "datasets": datasets}
