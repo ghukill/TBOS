@@ -24,7 +24,11 @@
             <tr>
                 <td>Level:</td>
                 <td>target: <code>{|{ bike.level }|}</code>, actual: <code>{|{ bike.reported.rm.level }|} [{|{
-                    bike.reported.rm.current }|}]</code></td>
+                    bike.reported.rm.current }|}]</code> <a role="button"
+                                                            style="background-color: green; border-color: green;"
+                                                            @click="adjustLevel(1)">Up</a>
+                    <a role="button" style="background-color: red; border-color: red;" @click="adjustLevel(-1)">Down</a>
+                </td>
             </tr>
             <tr>
                 <td>RPM:</td>
@@ -172,6 +176,19 @@
                 },
                 updateChart() {
                     this.charts.level.chart.update();
+                },
+                adjustLevel(delta) {
+                    this.bike.level = this.bike.level + delta
+                    if (this.bike.level < 1){
+                        this.bike.level = 1
+                    }
+                    if (this.bike.level > 20){
+                        this.bike.level = 20
+                    }
+                    axios.get(`/api/bike/rm/adjust/${this.bike.level}`)
+                        .then(response => {
+                            console.log(response.data)
+                        })
                 }
             },
             mounted: function () {
