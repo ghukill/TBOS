@@ -3,6 +3,7 @@ TBOS API
 """
 
 import json
+import random
 import time
 import traceback
 import uuid
@@ -175,6 +176,24 @@ def create_app():
             hb = Heartbeat(hb_uuid=str(uuid.uuid4()), ride_uuid=ride.ride_uuid, data=response, mark=ride.completed)
             hb.save()
             print(f"heartbeat recorded elapsed: {time.time() - thb0}")
+
+            # prepare chart data
+            labels = [str(x) for x in range(0, 20)]
+            datasets = [
+                {
+                    "label": "program",
+                    "borderColor": f"rgba({random.randint(0,255)},{random.randint(0,255)},{random.randint(0,255)},0.7)",
+                    "borderWidth": 1,
+                    "data": [random.randint(1, 21) for x in range(0, 20)],
+                },
+                {
+                    "label": "recorded",
+                    "borderColor": f"rgba({random.randint(0,255)},{random.randint(0,255)},{random.randint(0,255)},0.7)",
+                    "borderWidth": 1,
+                    "data": [random.randint(1, 21) for x in range(0, 20)],
+                },
+            ]
+            response["chart_data"] = {"labels": labels, "datasets": datasets}
 
             # return
             print(f"heartbeat elapsed: {time.time()-t1}")
@@ -464,6 +483,7 @@ def create_app():
     def gui_ride(ride_uuid):
 
         ride = Ride.query.get(ride_uuid)
+        ride.set_as_current()
 
         f = {"ride": ride}
 
