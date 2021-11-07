@@ -69,7 +69,7 @@
                                 label: 'program',
                                 data: [],
                                 borderColor: 'deeppink',
-                                borderWidth: 2
+                                borderWidth: 4,
                             },
                             {
                                 label: 'recorded',
@@ -99,6 +99,35 @@
                 }
             },
             methods: {
+                performHeartbeat: function () {
+                    axios.post('/api/heartbeat', {"localRide": {"completed": this.localCompleted}})
+                        .then(response => {
+
+                            let hb = response.data
+
+                            // update reported
+                            this.bike.reported.rm.level = hb.rm.level
+                            this.bike.reported.rm.current = hb.rm.current
+                            this.bike.reported.rpm.rpm = hb.rpm.rpm
+
+                            // set initial level from first heartbeat
+                            if (this.bike.level == null) {
+                                this.bike.level = this.bike.reported.rm.level
+                            }
+
+                            // segments
+                            if (hb.ride.last_segment != null && hb.ride.last_segment.is_new) {
+                                this.bike.level = hb.ride.last_segment.level
+                            }
+
+                            // update charts
+                            this.charts.level.data.labels = hb.chart_data.labels
+                            this.charts.level.data.datasets = hb.chart_data.datasets
+                            this.updateChart()
+
+                        })
+                        .catch(error => console.error(error));
+                },
                 startApiHeartbeat: function () {
                     this.heartbeatInterval = setInterval(() => {
                         // increment completed
@@ -179,10 +208,10 @@
                 },
                 adjustLevel(delta) {
                     this.bike.level = this.bike.level + delta
-                    if (this.bike.level < 1){
+                    if (this.bike.level < 1) {
                         this.bike.level = 1
                     }
-                    if (this.bike.level > 20){
+                    if (this.bike.level > 20) {
                         this.bike.level = 20
                     }
                     axios.get(`/api/bike/rm/adjust/${this.bike.level}`)
@@ -193,6 +222,7 @@
             },
             mounted: function () {
                 this.createChart();
+                this.performHeartbeat();
             }
         })
 

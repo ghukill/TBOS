@@ -186,7 +186,7 @@ def create_app():
                     "borderColor": "deeppink",
                     "borderWidth": 4,
                     "data": [n[0] for n in ride_data],
-                    "fill": False,
+                    # "fill": False,
                 },
                 {
                     "label": "recorded",
