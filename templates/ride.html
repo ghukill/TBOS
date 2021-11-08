@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
     <div>
-        <h2>Ride: <code>{{ f.ride.name }}</code></h2>
+        <h2 @click="polly('Starting ride: {{ f.ride.name }}')">Ride: <code>{{ f.ride.name }}</code></h2>
         <table>
             <tbody>
             <tr>
@@ -15,24 +15,41 @@
             </tr>
             <tr>
                 <td>Duration:</td>
-                <td><code>{|{ makePrettyTime({{ f.ride.duration }}) }|}</code></td>
+                <td><code style="color:deeppink;">{|{ makePrettyTime({{ f.ride.duration }}) }|}</code></td>
             </tr>
             <tr>
                 <td>Completed:</td>
-                <td><code>{|{ makePrettyTime(localCompleted) }|} ({|{ percentComplete }|}%)</code></td>
+                <td><code style="color:deeppink;">{|{ makePrettyTime(localCompleted) }|} ({|{ percentComplete
+                    }|}%)</code></td>
             </tr>
             <tr>
                 <td>Level:</td>
-                <td>target: <code>{|{ bike.level }|}</code>, actual: <code>{|{ bike.reported.rm.level }|} [{|{
-                    bike.reported.rm.current }|}]</code> <a role="button"
-                                                            style="background-color: green; border-color: green;"
-                                                            @click="adjustLevel(1)">Up</a>
-                    <a role="button" style="background-color: red; border-color: red;" @click="adjustLevel(-1)">Down</a>
+                <td>
+                    <code style="color:deeppink;">{|{ bike.level }|}</code> <a role="button"
+                                                                               style="margin-left:15px; background-color: green; border-color: green; font-size:200%;"
+                                                                               @click="adjustLevel(1)">↑</a>
+                    <a role="button" style="margin-left:15px; background-color: red; border-color: red; font-size:200%;"
+                       @click="adjustLevel(-1)">↓</a>
                 </td>
             </tr>
             <tr>
                 <td>RPM:</td>
-                <td><code>{|{ bike.reported.rpm.rpm }|}</code></td>
+                <td><code style="color:deeppink;">{|{ bike.reported.rpm.rpm }|}</code></td>
+            </tr>
+            <tr>
+                <td>Debug</td>
+                <td>
+                    <details>
+                        <summary>click to see more...</summary>
+                        <div>
+                            <ul>
+                                <li>actual bike level: <code>{|{ bike.reported.rm.level }|}</code>, resistance motor
+                                    current: <code>{|{bike.reported.rm.current }|}</code></li>
+                                <li>heartbeat queu: <code>{|{ queuedHeartbeats }|}</code></li>
+                            </ul>
+                        </div>
+                    </details>
+                </td>
             </tr>
             </tbody>
         </table>
@@ -43,8 +60,6 @@
             <canvas id="myChart"></canvas>
         </div>
     </div>
-
-
 {% endblock %}
 {% block page_script %}
     <script type="module">
@@ -56,6 +71,7 @@
         var data = {
             localCompleted: {{ f.ride.completed }},
             heartbeatInterval: null,
+            queuedHeartbeats: 0,
             bike: {
                 level: null,
                 reported: {rm: {level: null, current: null}, rpm: {rpm: null}}
@@ -129,12 +145,14 @@
                         .catch(error => console.error(error));
                 },
                 startApiHeartbeat: function () {
+                    this.polly("Starting!");
                     this.heartbeatInterval = setInterval(() => {
                         // increment completed
                         this.localCompleted += 1;
-                        // get heartbeat
+                        this.queuedHeartbeats += 1;
                         axios.post('/api/heartbeat', {"localRide": {"completed": this.localCompleted}})
                             .then(response => {
+                                this.queuedHeartbeats -= 1;
                                 let hb = response.data
 
                                 // update reported
@@ -162,6 +180,7 @@
                     }, 1000);
                 },
                 stopApiHeartbeat() {
+                    this.polly("I'm sure you did the best you could.");
                     clearInterval(this.heartbeatInterval);
                     this.heartbeatInterval = null;
                 },
@@ -216,11 +235,17 @@
                         .then(response => {
                             console.log(response.data)
                         })
-                }
+                },
+                polly(text) {
+                    var a = new Audio(`/gui/polly?text="${text}"`);
+                    a.muted = false;
+                    a.play();
+                },
             },
             mounted: function () {
                 this.createChart();
                 this.performHeartbeat();
+                this.polly("Starting ride: {{ f.ride.name }}, have fun my dude!");
             }
         })
 

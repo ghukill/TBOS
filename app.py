@@ -8,11 +8,22 @@ import time
 import traceback
 import uuid
 
-from flask import Flask, request, jsonify, render_template, redirect
+from flask import Flask, request, jsonify, render_template, redirect, Response
 from flask_cors import CORS
 from flask_migrate import Migrate
 
-from api.models import Bike, BikeSchema, LCD, PyboardClient, PybJobQueue, PybJobQueueSchema, Ride, RideSchema, Heartbeat
+from api.models import (
+    Bike,
+    BikeSchema,
+    LCD,
+    PyboardClient,
+    PybJobQueue,
+    PybJobQueueSchema,
+    Ride,
+    RideSchema,
+    Heartbeat,
+    PollyTTS,
+)
 from api.utils import parse_query_payload, tbos_state_clear
 
 from api.db import db
@@ -186,7 +197,6 @@ def create_app():
                     "borderColor": "deeppink",
                     "borderWidth": 4,
                     "data": [n[0] for n in ride_data],
-                    # "fill": False,
                 },
                 {
                     "label": "recorded",
@@ -503,6 +513,18 @@ def create_app():
         f = {"bike": bike}
 
         return render_template("bike.html", title="TBOS", f=f, v=str(uuid.uuid4()))
+
+    @app.route("/gui/polly", methods=["GET"])
+    def gui_polly():
+
+        """
+        Return MP3 binray data
+        """
+
+        polly = PollyTTS()
+        polly.text_to_data(request.args["text"])
+
+        return Response(polly.response["AudioStream"].read(), mimetype="audio/mpeg")
 
     # return Flask app instance
     return app

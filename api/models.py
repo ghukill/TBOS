@@ -5,12 +5,14 @@ TBOS API models
 from collections import namedtuple
 import datetime
 import json
+import os
 import random
 import serial
 import time
 import traceback
 import uuid
 
+import boto3
 import flask
 from marshmallow.decorators import pre_dump, pre_load
 from marshmallow import fields
@@ -928,6 +930,58 @@ class LCD:
                 cls.write("EOM", f"len: {l}")
                 break
         return l
+
+
+class PollyTTS:
+    def __init__(self):
+
+        # setup aws session
+        self.session = boto3.Session(profile_name="personal", region_name="us-east-1")
+
+        # setup clients
+        self.polly_client = self.session.client("polly")
+
+        # voice
+        self.voice_id = "Amy"
+
+        # filesystem
+        self.base_dir = "/tmp"
+        if not os.path.exists(self.base_dir):
+            os.mkdir(self.base_dir)
+
+    @property
+    def full_filepath(self):
+
+        return f"{self.base_dir}/{self.filename}.mp3"
+
+    def text_to_data(self, text):
+
+        print("sending text to Polly")
+
+        response = self.polly_client.synthesize_speech(
+            VoiceId=self.voice_id, OutputFormat="mp3", Text=text, Engine="neural"
+        )
+        self.response = response
+
+    def text_to_mp3(self, text):
+
+        print("playing mpe")
+
+        # mint filename
+        self.filename = str(uuid.uuid3(uuid.NAMESPACE_OID, text))
+        print(self.filename)
+
+        if os.path.exists(self.full_filepath):
+            print("loading pre-saved mp3")
+
+        else:
+            print("saving audio data as mp3")
+
+            self.text_to_data(text)
+            with open(self.full_filepath, "wb") as f:
+                f.write(self.response["AudioStream"].read())
+
+        return self.full_filepath
 
 
 ###############################################
