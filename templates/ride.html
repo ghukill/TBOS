@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
     <div>
-        <h2 @click="polly('Starting ride: {{ f.ride.name }}')">Ride: <code>{{ f.ride.name }}</code></h2>
+        <h2 @click="polly('{{ f.ride.name }}')">Ride: <code>{{ f.ride.name }}</code></h2>
         <table>
             <tbody>
             <tr>
@@ -69,7 +69,9 @@
 
         // set data
         var data = {
+            rideDuration: {{ f.ride.duration }},
             localCompleted: {{ f.ride.completed }},
+            rideIsCompleted: false,
             heartbeatInterval: null,
             queuedHeartbeats: 0,
             bike: {
@@ -119,7 +121,7 @@
                 performHeartbeat: function () {
                     axios.post('/api/heartbeat', {"localRide": {"completed": this.localCompleted}})
                         .then(response => {
-
+                            this.queuedHeartbeats -= 1;
                             let hb = response.data
 
                             // update reported
@@ -133,16 +135,20 @@
                             }
 
                             // segments
-                            if (hb.ride.last_segment != null && hb.ride.last_segment.is_new) {
+                            if (hb.ride.last_segment.is_new) {
                                 this.bike.level = hb.ride.last_segment.level
-                                this.programSegment.level = hb.ride.last_segment.level
-                                this.programSegmentChange()
+                                this.programSegmentChange(hb.ride.last_segment)
                             }
 
                             // update charts
                             this.charts.level.data.labels = hb.chart_data.labels
                             this.charts.level.data.datasets = hb.chart_data.datasets
                             this.updateChart()
+
+                            // see if ride done
+                            if (this.localCompleted >= this.rideDuration && !this.rideIsCompleted){
+                                this.rideCompleted();
+                            }
 
                         })
                         .catch(error => console.error(error));
@@ -152,37 +158,10 @@
                     this.heartbeatInterval = setInterval(() => {
                         this.localCompleted += 1;
                         this.queuedHeartbeats += 1;
-                        axios.post('/api/heartbeat', {"localRide": {"completed": this.localCompleted}})
-                            .then(response => {
-                                this.queuedHeartbeats -= 1;
-                                let hb = response.data
-
-                                // update reported
-                                this.bike.reported.rm.level = hb.rm.level
-                                this.bike.reported.rm.current = hb.rm.current
-                                this.bike.reported.rpm.rpm = hb.rpm.rpm
-
-                                // set initial level from first heartbeat
-                                if (this.bike.level == null) {
-                                    this.bike.level = this.bike.reported.rm.level
-                                }
-
-                                // segments
-                                if (hb.ride.last_segment.is_new) {
-                                    this.bike.level = hb.ride.last_segment.level
-                                    this.programSegmentChange(hb.ride.last_segment)
-                                }
-
-                                // update charts
-                                this.charts.level.data.labels = hb.chart_data.labels
-                                this.charts.level.data.datasets = hb.chart_data.datasets
-                                this.updateChart()
-
-                            })
-                            .catch(error => console.error(error));
+                        this.performHeartbeat();
                     }, 1000);
                 },
-                stopApiHeartbeat() {
+                async stopApiHeartbeat() {
                     this.polly(`Stopping at ${this.percentComplete} percent`);
                     clearInterval(this.heartbeatInterval);
                     this.heartbeatInterval = null;
@@ -244,18 +223,22 @@
                 },
                 async polly(text) {
                     var a = new Audio(`/gui/polly?text="${text}"`);
-                    a.muted = false;
                     a.play();
                 },
                 programSegmentChange(last_segment) {
                     console.log(last_segment)
-                    if (this.currentProgramSegment.num != last_segment.num){
+                    if (this.currentProgramSegment.num != last_segment.num) {
                         this.polly(`Program, going to level ${last_segment.level}`);
                     }
                     this.currentProgramSegment.level = last_segment.level;
                     this.currentProgramSegment.num = last_segment.num;
                     this.currentProgramSegment.window = last_segment.window;
 
+                },
+                rideCompleted(){
+                    this.rideIsCompleted = true;
+                    this.stopApiHeartbeat();
+                    this.polly(`Ride {{ f.ride.name }} completed, congratulations!`);
                 }
             },
             mounted: function () {
