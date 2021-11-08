@@ -135,8 +135,6 @@
                         // get heartbeat
                         axios.post('/api/heartbeat', {"localRide": {"completed": this.localCompleted}})
                             .then(response => {
-                                console.log(response.data)
-
                                 let hb = response.data
 
                                 // update reported
