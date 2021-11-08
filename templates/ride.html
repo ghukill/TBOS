@@ -135,7 +135,7 @@
                             }
 
                             // segments
-                            if (hb.ride.last_segment.is_new) {
+                            if (hb.ride.last_segment != null && hb.ride.last_segment.is_new) {
                                 this.bike.level = hb.ride.last_segment.level
                                 this.programSegmentChange(hb.ride.last_segment)
                             }
