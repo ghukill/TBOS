@@ -28,9 +28,14 @@
                             console.log(response.data)
                             this.bikeJson = response.data
                         })
-                }
+                },
+                async polly(text) {
+                    var a = new Audio(`/gui/polly?text="${text}"`);
+                    a.play();
+                },
             },
             mounted: function () {
+                this.polly('Displaying information for bike: {{ f.bike.name }}');
                 this.getBikeStatus();
             }
         })

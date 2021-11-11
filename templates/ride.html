@@ -146,7 +146,7 @@
                             this.updateChart()
 
                             // see if ride done
-                            if (this.localCompleted >= this.rideDuration && !this.rideIsCompleted){
+                            if (this.localCompleted >= this.rideDuration && !this.rideIsCompleted) {
                                 this.rideCompleted();
                             }
 
@@ -235,7 +235,7 @@
                     this.currentProgramSegment.window = last_segment.window;
 
                 },
-                rideCompleted(){
+                rideCompleted() {
                     this.rideIsCompleted = true;
                     this.stopApiHeartbeat();
                     this.polly(`Ride {{ f.ride.name }} completed, congratulations!`);
