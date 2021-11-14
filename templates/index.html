@@ -1,7 +1,38 @@
 {% extends "base.html" %}
 {% block content %}
-<div>
-    <img src="{{ url_for('static', filename='tbos_splash.png') }}"/>
-</div>
+    <div>
+        <img @click="randomQuote" src="{{ url_for('static', filename='tbos_splash.png') }}"/>
+    </div>
 {% endblock %}
-{% block page_script %}{% endblock %}
+{% block page_script %}
+    <script type="module">
+
+        // set data
+        var data = {}
+
+        // create Vue
+        var vm = new Vue({
+            el: '#vm',
+            data: data,
+            delimiters: ['{|{', '}|}'],
+            computed: {},
+            methods: {
+                async polly(text) {
+                    var a = new Audio(`/gui/polly?text="${text}"`);
+                    a.play();
+                },
+                randomQuote(){
+                    // get quote
+                    axios.get(`https://api.quotable.io/random`)
+                        .then(response => {
+                            console.log(response.data)
+                            this.polly(`${response.data.content}, ${response.data.author}`);
+                        })
+                }
+            },
+            mounted: function () {
+            }
+        })
+
+    </script>
+{% endblock %}

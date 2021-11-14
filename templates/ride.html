@@ -46,6 +46,7 @@
                                 <li>actual bike level: <code>{|{ bike.reported.rm.level }|}</code>, resistance motor
                                     current: <code>{|{bike.reported.rm.current }|}</code></li>
                                 <li>heartbeat queu: <code>{|{ queuedHeartbeats }|}</code></li>
+                                <li><a @click="randomQuote()" role="button">Preach!</a></li>
                             </ul>
                         </div>
                     </details>
@@ -205,10 +206,10 @@
                 updateChart() {
                     this.charts.level.chart.update();
                 },
-                adjustLevel(delta) {
+                async adjustLevel(delta) {
                     this.bike.level = this.bike.level + delta
 
-                    this.polly(`Going to level ${this.bike.level}`);
+                    this.polly(`Going to level ${this.bike.level}`)
 
                     if (this.bike.level < 1) {
                         this.bike.level = 1
@@ -239,6 +240,14 @@
                     this.rideIsCompleted = true;
                     this.stopApiHeartbeat();
                     this.polly(`Ride {{ f.ride.name }} completed, congratulations!`);
+                },
+                randomQuote(){
+                    // get quote
+                    axios.get(`https://api.quotable.io/random`)
+                        .then(response => {
+                            console.log(response.data)
+                            this.polly(`${response.data.content}, ${response.data.author}`);
+                        })
                 }
             },
             mounted: function () {
