@@ -206,8 +206,14 @@ def create_app():
                     "data": [n[1] for n in ride_data],
                     "fill": True,
                 },
+                {
+                    "label": "rpm",
+                    "borderColor": "blue",
+                    "borderWidth": 1,
+                    "data": [n[2] for n in ride_data],
+                },
             ]
-            response["chart_data"] = {"labels": labels, "datasets": datasets}
+            response["chart_data"] = {"labels": labels, "datasets": datasets[:2], "rpm_dataset": [datasets[2]]}
 
             # return
             print(f"heartbeat elapsed: {time.time()-t1}")

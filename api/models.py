@@ -296,6 +296,11 @@ class Bike(db.Model):
                 self._level = status["rm"]["level"]
         return self._level
 
+    @property
+    def random_virtual_rpm(self):
+
+        return (random.randint(0, 100)) + random.random()
+
     def _generate_virtual_status(self, level=10):
 
         """
@@ -303,7 +308,7 @@ class Bike(db.Model):
         """
         current = int(((self._config.rm.upper_bound - self._config.rm.lower_bound) / 20) * level)
         rm = {"level": level, "current": current}
-        virtual_status = {"rm": rm, "rpm": {"rpm": 62.01}}
+        virtual_status = {"rm": rm, "rpm": {"rpm": self.random_virtual_rpm}}
         self.last_status = virtual_status
         app.db.session.add(self)
         app.db.session.commit()
@@ -325,6 +330,9 @@ class Bike(db.Model):
                 response = self._generate_virtual_status()
             else:
                 response = self.last_status
+            # random rpm
+            response["rpm"]["rpm"] = self.random_virtual_rpm
+
         else:
             response = PybJobQueue.create_and_run_job(
                 [
@@ -677,17 +685,18 @@ class Ride(db.Model):
 
         # handle no program
         if self.program is None:
-            output.extend([[None, None] for _ in range(0, len(self.heartbeats))])
+            output.extend([[None, None, None] for _ in range(0, len(self.heartbeats))])
 
         # else, loop through segments and extend to per second
         else:
             output = []
             for segment in self.program:
-                output.extend([[segment[0], None] for _ in range(segment[1][0], segment[1][1])])
+                output.extend([[segment[0], None, None] for _ in range(segment[1][0], segment[1][1])])
 
         # interleave heartbeats
         for hb in self.heartbeats:
             output[hb.mark - 1][1] = hb.level
+            output[hb.mark - 1][2] = hb.rpm
 
         print(f"full level data elapsed: {time.time()-t0}")
         return output

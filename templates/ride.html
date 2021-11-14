@@ -14,12 +14,8 @@
                 </td>
             </tr>
             <tr>
-                <td>Duration:</td>
-                <td><code style="color:deeppink;">{|{ makePrettyTime({{ f.ride.duration }}) }|}</code></td>
-            </tr>
-            <tr>
-                <td>Completed:</td>
-                <td><code style="color:deeppink;">{|{ makePrettyTime(localCompleted) }|} ({|{ percentComplete
+                <td>Time:</td>
+                <td><code style="color:deeppink;">{|{ makePrettyTime(localCompleted) }|} / {|{ makePrettyTime({{ f.ride.duration }}) }|} ({|{ percentComplete
                     }|}%)</code></td>
             </tr>
             <tr>
@@ -58,9 +54,16 @@
 
     <div>
         <div class="chart-container" style="position: relative;">
-            <canvas id="myChart"></canvas>
+            <canvas id="levelChart"></canvas>
         </div>
     </div>
+
+    <div>
+        <div class="chart-container" style="position: relative;">
+            <canvas id="rpmChart"></canvas>
+        </div>
+    </div>
+
 {% endblock %}
 {% block page_script %}
     <script type="module">
@@ -101,6 +104,20 @@
                             }]
                     },
                     chart: null
+                },
+                rpm: {
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: 'program',
+                                data: [],
+                                borderColor: 'blue',
+                                borderWidth: 1,
+                            },
+                        ]
+                    },
+                    chart: null
                 }
             }
         }
@@ -116,6 +133,9 @@
                 },
                 chartLevelData() {
                     return this.charts.level.data;
+                },
+                chartRpmData() {
+                    return this.charts.rpm.data;
                 }
             },
             methods: {
@@ -144,6 +164,8 @@
                             // update charts
                             this.charts.level.data.labels = hb.chart_data.labels
                             this.charts.level.data.datasets = hb.chart_data.datasets
+                            this.charts.rpm.data.labels = hb.chart_data.labels // use hb labels
+                            this.charts.rpm.data.datasets = hb.chart_data.rpm_dataset
                             this.updateChart()
 
                             // see if ride done
@@ -171,8 +193,10 @@
                     return makePrettyTime(s);
                 },
                 createChart() {
+
+                    // create level chart
                     this.charts.level.chart = new Chart(
-                        document.getElementById('myChart').getContext('2d'),
+                        document.getElementById('levelChart').getContext('2d'),
                         {
                             type: 'line',
                             data: this.chartLevelData,
@@ -202,9 +226,41 @@
                             }
                         }
                     )
+
+                    // create level chart
+                    this.charts.rpm.chart = new Chart(
+                        document.getElementById('rpmChart').getContext('2d'),
+                        {
+                            type: 'line',
+                            data: this.chartRpmData,
+                            options: {
+                                responsive: true,
+                                animation: {
+                                    duration: 0
+                                },
+                                elements: {
+                                    point: {
+                                        radius: 0,
+                                    },
+                                },
+                                scales: {
+                                    xAxes: [{
+                                        display: false, // this will remove all the x-axis grid lines
+                                    }],
+                                    yAxes: [{
+                                        ticks: {
+                                            beginAtZero: false,
+                                        },
+                                    }],
+                                }
+                            }
+                        }
+                    )
+
                 },
                 updateChart() {
                     this.charts.level.chart.update();
+                    this.charts.rpm.chart.update();
                 },
                 async adjustLevel(delta) {
                     this.bike.level = this.bike.level + delta
