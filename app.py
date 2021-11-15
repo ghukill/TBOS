@@ -189,7 +189,7 @@ def create_app():
             print(f"heartbeat recorded elapsed: {time.time() - thb0}")
 
             # prepare chart data
-            ride_data = ride.get_full_level_data()
+            ride_data = ride.parse_recorded_timeseries()
             labels = [f"{str(x)}s" for x in range(1, len(ride_data) + 1)]
             datasets = [
                 {

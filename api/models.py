@@ -299,7 +299,7 @@ class Bike(db.Model):
     @property
     def random_virtual_rpm(self):
 
-        return (random.randint(0, 100)) + random.random()
+        return (random.randint(50, 100)) + random.random()
 
     def _generate_virtual_status(self, level=10):
 
@@ -670,12 +670,12 @@ class Ride(db.Model):
         # return segment
         return segment
 
-    def get_full_level_data(self):
+    def parse_recorded_timeseries(self):
 
         """
-        Return program and recorded levels by second
+        Return program and recorded information by second
 
-        :return: [(program_level, recorded_level)], where index of list is second
+        :return: [(program_level, recorded_level, rpm)], where index of list is second
         """
 
         t0 = time.time()
