@@ -524,13 +524,20 @@ def create_app():
     def gui_polly():
 
         """
-        Return MP3 binray data
+        Return MP3 binaay data
         """
 
         polly = PollyTTS()
         polly.text_to_data(request.args["text"])
 
         return Response(polly.response["AudioStream"].read(), mimetype="audio/mpeg")
+
+    @app.route("/gui/testing/map", methods=["GET"])
+    def testing_map():
+
+        f = {}
+
+        return render_template("testing/map.html", title="TBOS - map testing", f=f, v=str(uuid.uuid4()))
 
     # return Flask app instance
     return app
