@@ -240,11 +240,11 @@ def create_app():
             # add ghost rider
             t10 = time.time()
             ghost_lat, ghost_lon = None, None
-            # if ride.gpx_df is not None:
-            #     marks = ride.gpx_df[ride.gpx_df.mark == ride.completed]
-            #     if len(marks) > 0:
-            #         row = marks.iloc[0]
-            #         ghost_lat, ghost_lon = row.latitude, row.longitude
+            if ride.gpx_df is not None:
+                marks = ride.gpx_df[ride.gpx_df.mark == ride.completed]
+                if len(marks) > 0:
+                    row = marks.iloc[0]
+                    ghost_lat, ghost_lon = row.latitude, row.longitude
             response["map"] = {"ghost_rider": {"latitude": ghost_lat, "longitude": ghost_lon}}
             print(f"ghost rider elapsed: {time.time()-t10}")
 
