@@ -1,6 +1,17 @@
 {% extends "base.html" %}
+{% block head_mixins %}
+    <style>
+        #map {
+            height: 640px;
+        }
+
+        #map a[role=button] {
+            padding: 0px;
+        }
+    </style>
+{% endblock %} #}
 {% block content %}
-    <div>
+    <section>
         <h2 @click="polly('{{ f.ride.name }}')">Ride: <code>{{ f.ride.name }}</code></h2>
         <table>
             <tbody>
@@ -35,19 +46,24 @@
             </tr>
             </tbody>
         </table>
-    </div>
+    </section>
 
-    <div>
+    <section>
         <div class="chart-container" style="position: relative; height:240px;">
             <canvas id="levelChart"></canvas>
         </div>
-    </div>
+    </section>
 
-    <div>
+    <section>
         <div class="chart-container" style="position: relative; height:240px;">
             <canvas id="rpmChart"></canvas>
         </div>
-    </div>
+    </section>
+
+    <!-- GPX map -->
+    <section v-if="rideType === 'gpx'">
+        <div id="map"></div>
+    </section>
 
 {% endblock %}
 {% block page_script %}
@@ -58,6 +74,7 @@
 
         // set data
         var data = {
+            rideType: '{{ f.ride.ride_type }}',
             rideDuration: {{ f.ride.duration }},
             localCompleted: {{ f.ride.completed }},
             rideIsCompleted: false,
@@ -104,7 +121,10 @@
                     },
                     chart: null
                 }
-            }
+            },
+
+            // wacky, but works!
+            map:{{ f.ride.get_gpx_map_details()|safe }}
         }
 
         // create Vue
@@ -293,12 +313,58 @@
                             console.log(response.data)
                             this.polly(`${response.data.content}, ${response.data.author}`);
                         })
-                }
+                },
+                createMap() {
+
+                    // init active node
+                    this.map.layers = {
+                        marker: null,
+                        route: null
+                    }
+
+                    // create map
+                    var mapOptions = {
+                        fullscreenControl: true
+                    }
+                    var mymap = L.map('map', mapOptions);
+
+                    // set to bounds
+                    mymap.fitBounds(this.map.bbox);
+
+                    // add tiles
+                    L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+                        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+                        maxZoom: 18,
+                        id: 'mapbox/streets-v11',
+                        tileSize: 512,
+                        zoomOffset: -1,
+                        accessToken: 'sk.eyJ1IjoiZ2h1a2lsbCIsImEiOiJja3cxc3M1d2QyODc2MnZtcnZtcHd2aTF1In0.0chKHQDPT3FiCukvT7ikHw'
+                    }).addTo(mymap);
+
+                    // add marker
+                    var markerOptions = {
+                        color: 'deeppink'
+                    }
+                    this.map.layers.marker = L.marker([this.map.marker[0], this.map.marker[1]], markerOptions).addTo(mymap);
+
+                    // draw route
+                    var routeOptions = {
+                        color: 'deeppink',
+                        weight: 6,
+                        opacity: 0.6
+                    }
+                    this.map.layers.route = L.polyline(this.map.route_points, routeOptions).addTo(mymap);
+                },
             },
             mounted: function () {
                 this.createChart();
                 this.performHeartbeat();
                 this.polly("Loading ride: {{ f.ride.name }}.");
+
+                // if GPX ride, create map
+                if (this.rideType === 'gpx') {
+                    this.createMap()
+                }
             }
         })
 

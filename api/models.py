@@ -7,6 +7,8 @@ import datetime
 import json
 import os
 import random
+
+import pandas as pd
 import serial
 import time
 import traceback
@@ -469,6 +471,68 @@ class Ride(db.Model):
 
     heartbeats = relationship("Heartbeat", back_populates="ride")
 
+    @property
+    def gpx_df(self):
+
+        """
+        Return GPX data as parsed dataframe
+        """
+
+        if self.gpx is None:
+            return None
+
+        # if not yet retrieved, retrieve
+        if getattr(self, "_gpx_df", None) is None:
+            print("loading GPX data as dataframe")
+            self._gpx_df = self.gpx_df_from_serialized(self.gpx)
+
+        return self._gpx_df
+
+    @classmethod
+    def gpx_df_from_serialized(cls, df_dict):
+
+        """
+        Single point of conversion
+        """
+
+        df = pd.DataFrame.from_dict(df_dict)
+        df["time_parsed"] = df.time.apply(lambda x: datetime.datetime.fromtimestamp(x / 1000.0))
+        return df
+
+    def get_gpx_map_details(self):
+
+        """
+        Generate data for front-end maps from GPX dataset
+        """
+
+        if self.gpx_df is None:
+            return None
+
+        # get bounding box for all points
+        bbox = [
+            [self.gpx_df.latitude.max(), self.gpx_df.longitude.min()],
+            [self.gpx_df.latitude.min(), self.gpx_df.longitude.max()],
+        ]
+
+        # get center point
+        cp = ((bbox[0][0] + bbox[1][0]) / 2, (bbox[1][1] + bbox[0][1]) / 2)
+
+        # initial marker
+        marker = [self.gpx_df.iloc[0].latitude, self.gpx_df.iloc[0].longitude]
+
+        # all points
+        route_points = [[row.latitude, row.longitude] for row in self.gpx_df.itertuples()]
+
+        return {"bbox": bbox, "cp": cp, "marker": marker, "route_points": route_points}
+
+    @property
+    def ride_type(self):
+
+        ride_type = "random_duration"
+        if self.gpx_df is not None:
+            ride_type = "gpx"
+        return ride_type
+
     def set_as_current(self):
 
         """
@@ -614,20 +678,16 @@ class Ride(db.Model):
         return program
 
     @classmethod
-    def generate_distance_ride_from_gpx(cls, gpx_df):
+    def generate_program_from_gpx(cls, gpx_df):
 
         """
         Generate ride from GPX data
 
         :param gpx_df: Dataframe of gpx
-            - columns: time, latitude, longitude, altitude
+            - columns: time, latitude, longitude, altitude, time_parsed
         """
 
-        # get bounding box for all points
-        bbox = [(gpx_df.latitude.max(), gpx_df.longitude.min()), (gpx_df.latitude.min(), gpx_df.longitude.max())]
-
-        # get center point
-        cp = ((bbox[0][0] + bbox[1][0]) / 2, (bbox[1][1] + bbox[0][1]) / 2)
+        pass
 
     def handle_program_segment(self, response, bike):
 

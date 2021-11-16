@@ -502,7 +502,7 @@ def create_app():
         #########################################
         # GPX
         #########################################
-        if payload["ride_type"] == "gpx":
+        elif payload["ride_type"] == "gpx":
 
             # download file to tmp, then convert to dataframe in memory
             print("saving GPX to disk and loading as dataframe")
@@ -514,14 +514,21 @@ def create_app():
             os.remove(tmp_filepath)
             print(f"GPX loaded with {len(gpx_df)} data points")
 
-            # handle duration
-            duration = (gpx_df.time.max() - gpx_df.time.min()).seconds
-
-            # handle program
-            program = None
-
-            # convert gpx dataframe to JSON
+            # convert gpx dataframe to JSON, then dictionary, for serialization
             gpx_dict = json.loads(gpx_df.to_json())
+
+            # reload dataframe to simulate
+            gpx_df = Ride.gpx_df_from_serialized(gpx_dict)
+
+            # handle duration
+            duration = int((gpx_df.time.max() - gpx_df.time.min()) / 1000.0)
+
+            # set program to NULL initially
+            program = Ride.generate_program_from_gpx(gpx_df)
+
+        # handle unknown ride_type
+        else:
+            raise Exception(f"ride_type {payload.get('ride_type')} not recognized")
 
         # create new Ride
         ride = Ride(
