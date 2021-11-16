@@ -464,6 +464,7 @@ class Ride(db.Model):
     completed = db.Column(db.Float, nullable=False, default=0.0)
     is_current = db.Column(db.Boolean, default=0, nullable=False)
     program = db.Column(db.JSON, nullable=True)
+    gpx = db.Column(db.JSON, nullable=True)
     last_segment = db.Column(db.JSON, nullable=True)
 
     heartbeats = relationship("Heartbeat", back_populates="ride")
@@ -611,6 +612,22 @@ class Ride(db.Model):
 
         # return
         return program
+
+    @classmethod
+    def generate_distance_ride_from_gpx(cls, gpx_df):
+
+        """
+        Generate ride from GPX data
+
+        :param gpx_df: Dataframe of gpx
+            - columns: time, latitude, longitude, altitude
+        """
+
+        # get bounding box for all points
+        bbox = [(gpx_df.latitude.max(), gpx_df.longitude.min()), (gpx_df.latitude.min(), gpx_df.longitude.max())]
+
+        # get center point
+        cp = ((bbox[0][0] + bbox[1][0]) / 2, (bbox[1][1] + bbox[0][1]) / 2)
 
     def handle_program_segment(self, response, bike):
 

@@ -33,34 +33,18 @@
                 <td>RPM:</td>
                 <td><code style="color:deeppink;">{|{ bike.reported.rpm.rpm }|}</code></td>
             </tr>
-            <tr>
-                <td>Debug</td>
-                <td>
-                    <details>
-                        <summary>click to see more...</summary>
-                        <div>
-                            <ul>
-                                <li>actual bike level: <code>{|{ bike.reported.rm.level }|}</code>, resistance motor
-                                    current: <code>{|{bike.reported.rm.current }|}</code></li>
-                                <li>heartbeat queu: <code>{|{ queuedHeartbeats }|}</code></li>
-                                <li><a @click="randomQuote()" role="button">Preach!</a></li>
-                            </ul>
-                        </div>
-                    </details>
-                </td>
-            </tr>
             </tbody>
         </table>
     </div>
 
     <div>
-        <div class="chart-container" style="position: relative;">
+        <div class="chart-container" style="position: relative; height:240px;">
             <canvas id="levelChart"></canvas>
         </div>
     </div>
 
     <div>
-        <div class="chart-container" style="position: relative;">
+        <div class="chart-container" style="position: relative; height:240px;">
             <canvas id="rpmChart"></canvas>
         </div>
     </div>
@@ -93,7 +77,7 @@
                                 label: 'program',
                                 data: [],
                                 borderColor: 'deeppink',
-                                borderWidth: 4,
+                                borderWidth: 3,
                             },
                             {
                                 label: 'recorded',
@@ -204,6 +188,7 @@
                             type: 'line',
                             data: this.chartLevelData,
                             options: {
+                                maintainAspectRatio: false,
                                 responsive: true,
                                 animation: {
                                     duration: 0
@@ -237,6 +222,7 @@
                             type: 'line',
                             data: this.chartRpmData,
                             options: {
+                                maintainAspectRatio: false,
                                 responsive: true,
                                 animation: {
                                     duration: 0

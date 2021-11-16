@@ -4,46 +4,76 @@
         <h2>
             New Ride
         </h2>
+        <details>
+            <summary>New Program Ride</summary>
+            <article>
+                <form action="/gui/rides" method="POST">
+
+                    <div class="grid">
+                        <label for="name">
+                            Ride Name
+                            <input v-model="name" type="text" id="name" name="name" placeholder="Boss ride, TBOS style"
+                                   required>
+                        </label>
+                    </div>
+
+                    <div class="grid">
+                        <label style="display: none;" for="random">
+                            <input type="checkbox" id="random" name="random" role="switch" checked>
+                            Random
+                        </label>
+                        <label for="duration">Duration (<code style="color: deeppink">{|{ duration }|}</code>)
+                            <input v-model="duration" type="range" min="1" max="120" value="30" id="duration"
+                                   name="duration">
+                        </label>
+                        <label for="level_low">Lowest Level (<code style="color: deeppink">{|{ level_low }|}</code>)
+                            <input v-model="level_low" type="range" min="1" max="20" value="4" id="level_low"
+                                   name="level_low">
+                        </label>
+                        <label for="level_high">Highest Level (<code style="color: deeppink">{|{ level_high }|}</code>)
+                            <input v-model="level_high" type="range" min="1" max="20" value="12" id="level_high"
+                                   name="level_high">
+                        </label>
+                        <label for="segment_length">Segment Length (<code style="color: deeppink">{|{ segment_length
+                            }|}</code>)
+                            <input v-model="segment_length" type="range" min="15" max="480" value="12"
+                                   id="segment_length"
+                                   name="segment_length">
+                        </label>
+                    </div>
+
+                    <!-- Submit -->
+                    <input type="hidden" name="ride_type" value="random_duration"/>
+                    <button type="submit">Get it!</button>
+
+                </form>
+            </article>
+        </details>
         <details open>
-            <summary>Create Random Ride</summary>
-            <form action="/gui/rides" method="POST">
+            <summary>Load GPX Ride</summary>
+            <article>
+                <form action="/gui/rides" method="POST" enctype="multipart/form-data">
 
-                <div class="grid">
-                    <label for="name">
-                        Ride Name
-                        <input v-model="name" type="text" id="name" name="name" placeholder="Boss ride, TBOS style"
-                               required>
-                    </label>
-                </div>
+                    <div class="grid">
+                        <label for="name">
+                            Ride Name
+                            <input v-model="name" type="text" id="name" name="name" placeholder="Boss ride, TBOS style"
+                                   required>
+                        </label>
+                    </div>
 
-                <div class="grid">
-                    <label style="display: none;" for="random">
-                        <input type="checkbox" id="random" name="random" role="switch" checked>
-                        Random
-                    </label>
-                    <label for="duration">Duration (<code style="color: deeppink">{|{ duration }|}</code>)
-                        <input v-model="duration" type="range" min="1" max="120" value="30" id="duration"
-                               name="duration">
-                    </label>
-                    <label for="level_low">Lowest Level (<code style="color: deeppink">{|{ level_low }|}</code>)
-                        <input v-model="level_low" type="range" min="1" max="20" value="4" id="level_low"
-                               name="level_low">
-                    </label>
-                    <label for="level_high">Highest Level (<code style="color: deeppink">{|{ level_high }|}</code>)
-                        <input v-model="level_high" type="range" min="1" max="20" value="12" id="level_high"
-                               name="level_high">
-                    </label>
-                    <label for="segment_length">Segment Length (<code style="color: deeppink">{|{ segment_length
-                        }|}</code>)
-                        <input v-model="segment_length" type="range" min="15" max="480" value="12" id="segment_length"
-                               name="segment_length">
-                    </label>
-                </div>
+                    <div class="grid">
+                        <label for="gpx_file">Upload GPX file
+                            <input type="file" id="gpx_file" name="gpx_file">
+                        </label>
+                    </div>
 
-                <!-- Button -->
-                <button type="submit">Get it!</button>
+                    <!-- Submit -->
+                    <input type="hidden" name="ride_type" value="gpx"/>
+                    <button type="submit">Get it!</button>
 
-            </form>
+                </form>
+            </article>
         </details>
     </div>
     <div>
@@ -64,7 +94,8 @@
                     <th scope="row"><a href="/gui/ride/{{ ride.ride_uuid }}">{{ ride.name }}<a/></th>
                     <td>{{ ride.date_start.strftime("%a, %d.%m.%Y") }}</td>
                     <td><code>{|{ makePrettyTime({{ (ride.duration) }}) }|}</code></td>
-                    <td><code>{|{ makePrettyTime({{ (ride.completed) }}) }|} ({|{ percentComplete({{ ride.duration }}, {{ ride.completed }}) }|}%)</code></td>
+                    <td><code>{|{ makePrettyTime({{ (ride.completed) }}) }|} ({|{
+                        percentComplete({{ ride.duration }}, {{ ride.completed }}) }|}%)</code></td>
                     <td>This will be a picture...</td>
                 </tr>
             {% endfor %}
@@ -95,12 +126,12 @@
             el: '#vm',
             data: data,
             delimiters: ['{|{', '}|}'],
-            computed:{},
+            computed: {},
             methods: {
                 makePrettyTime(s) {
                     return makePrettyTime(s);
                 },
-                percentComplete(d,c){
+                percentComplete(d, c) {
                     return Math.floor((c / d) * 100);
                 }
             },

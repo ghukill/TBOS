@@ -3,6 +3,7 @@ TBOS API
 """
 
 import json
+import os
 import random
 import time
 import traceback
@@ -11,6 +12,7 @@ import uuid
 from flask import Flask, request, jsonify, render_template, redirect, Response
 from flask_cors import CORS
 from flask_migrate import Migrate
+from gpx_converter import Converter
 
 from api.models import (
     Bike,
@@ -195,7 +197,7 @@ def create_app():
                 {
                     "label": "program",
                     "borderColor": "deeppink",
-                    "borderWidth": 4,
+                    "borderWidth": 3,
                     "data": [n[0] for n in ride_data],
                 },
                 {
@@ -210,7 +212,7 @@ def create_app():
                     "label": "rpm",
                     "borderColor": "blue",
                     "borderWidth": 1,
-                    "data": [n[2] for n in ride_data],
+                    "data": [{0: None}.get(n[2], n[2]) for n in ride_data],
                 },
             ]
             response["chart_data"] = {"labels": labels, "datasets": datasets[:2], "rpm_dataset": [datasets[2]]}
@@ -474,23 +476,61 @@ def create_app():
         # get input
         payload = request.form
 
-        # handle duration
-        duration = int(payload.get("duration", 30)) * 60
+        #########################################
+        # RANDOM DURATION
+        #########################################
+        if payload["ride_type"] == "random_duration":
 
-        # handle random program
-        random = {"on": True, "off": False}[payload.get("random", "on")]
-        if random:
-            program = Ride.generate_random_program(
-                duration,
-                low=int(payload.get("level_low", 1)),
-                high=int(payload.get("level_high", 20)),
-                segment_length_s=int(payload.get("segment_length", 60)),
-            )
-        else:
+            # handle duration
+            duration = int(payload.get("duration", 30)) * 60
+
+            # handle random program
+            random = {"on": True, "off": False}[payload.get("random", "on")]
+            if random:
+                program = Ride.generate_random_program(
+                    duration,
+                    low=int(payload.get("level_low", 1)),
+                    high=int(payload.get("level_high", 20)),
+                    segment_length_s=int(payload.get("segment_length", 60)),
+                )
+            else:
+                program = None
+
+            # gpx data
+            gpx_dict = None
+
+        #########################################
+        # GPX
+        #########################################
+        if payload["ride_type"] == "gpx":
+
+            # download file to tmp, then convert to dataframe in memory
+            print("saving GPX to disk and loading as dataframe")
+            uf = request.files["gpx_file"]
+            tmp_filepath = f"/tmp/{uf.filename}"
+            with open(tmp_filepath, "wb") as f:
+                f.write(uf.read())
+            gpx_df = Converter(input_file=tmp_filepath).gpx_to_dataframe()
+            os.remove(tmp_filepath)
+            print(f"GPX loaded with {len(gpx_df)} data points")
+
+            # handle duration
+            duration = (gpx_df.time.max() - gpx_df.time.min()).seconds
+
+            # handle program
             program = None
 
+            # convert gpx dataframe to JSON
+            gpx_dict = json.loads(gpx_df.to_json())
+
         # create new Ride
-        ride = Ride(ride_uuid=str(uuid.uuid4()), name=payload.get("name", None), duration=duration, program=program)
+        ride = Ride(
+            ride_uuid=str(uuid.uuid4()),
+            name=payload.get("name", None),
+            duration=duration,
+            program=program,
+            gpx=gpx_dict,
+        )
 
         # create and set as current
         ride.save()

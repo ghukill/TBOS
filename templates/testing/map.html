@@ -24,14 +24,15 @@
             <a onclick="return false;" href="#" role="button" @click="beginRandomMovement">{|{ randomToggle }|}
                 Random</a>
             <div style="margin-top:20px;">
-            <label for="randomDelay">Delay (<code style="color: deeppink">{|{ randomDelay }|}</code>)
-                <input v-model="randomDelay" type="range" min="50" max="1000" value="250" id="randomDelay"
-                       name="randomDelay">
-            </label>
-                <label for="randomDistance">Distance (<code>125</code> good for close-up) (<code style="color: deeppink">{|{ randomDistance }|}</code>)
-                <input v-model="randomDistance" type="range" min="75" max="100000" value="125" id="randomDistance"
-                       name="randomDistance">
-            </label>
+                <label for="randomDelay">Delay (<code style="color: deeppink">{|{ randomDelay }|}</code>)
+                    <input v-model="randomDelay" type="range" min="50" max="1000" id="randomDelay"
+                           name="randomDelay">
+                </label>
+                <label for="randomDistance">Distance (<code>125</code> good for close-up) (<code
+                        style="color: deeppink">{|{ randomDistance }|}</code>)
+                    <input v-model="randomDistance" type="range" min="75" max="100000" id="randomDistance"
+                           name="randomDistance">
+                </label>
             </div>
         </div>
     </section>
@@ -55,7 +56,7 @@
             },
             randomMoveInt: null,
             randomDelay: 125,
-            randomDistance: 125
+            randomDistance: 900
         }
 
         // create Vue
@@ -82,7 +83,16 @@
                 createMap() {
 
                     // create map
-                    var mymap = L.map('map', {fullscreenControl: true}).setView([this.map.homeLat, this.map.homeLon], 17);
+                    var mapOptions = {
+                        fullscreenControl: true
+                    }
+                    var mymap = L.map('map', mapOptions);
+
+                    // set to bounds
+                    mymap.fitBounds([
+                        [52.553827, 13.349852],
+                        [52.517004, 13.413533]
+                    ]);
 
                     // add tiles
                     L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
