@@ -2,7 +2,7 @@
 {% block head_mixins %}
     <style>
         #map {
-            height: 480px;
+            height: 640px;
         }
 
         #map a[role=button] {
@@ -21,7 +21,18 @@
             <a onclick="return false;" href="#" role="button" @click="moveMarker(-0.000250)">Marker Left</a>
             <a onclick="return false;" href="#" role="button" @click="moveMarker(0.000250)">Marker Right</a>
             <a onclick="return false;" href="#" role="button" @click="randomMoveMarker">Marker Random</a>
-            <a onclick="return false;" href="#" role="button" @click="beginRandomMovement">{|{ randomToggle }|} Random</a>
+            <a onclick="return false;" href="#" role="button" @click="beginRandomMovement">{|{ randomToggle }|}
+                Random</a>
+            <div style="margin-top:20px;">
+            <label for="randomDelay">Delay (<code style="color: deeppink">{|{ randomDelay }|}</code>)
+                <input v-model="randomDelay" type="range" min="50" max="1000" value="250" id="randomDelay"
+                       name="randomDelay">
+            </label>
+                <label for="randomDistance">Distance (<code>125</code> good for close-up) (<code style="color: deeppink">{|{ randomDistance }|}</code>)
+                <input v-model="randomDistance" type="range" min="75" max="100000" value="125" id="randomDistance"
+                       name="randomDistance">
+            </label>
+            </div>
         </div>
     </section>
     <section>
@@ -42,7 +53,9 @@
                 markerLat: 52.553625,
                 markerLon: 13.401555,
             },
-            randomMoveInt:null
+            randomMoveInt: null,
+            randomDelay: 125,
+            randomDistance: 125
         }
 
         // create Vue
@@ -51,20 +64,24 @@
             data: data,
             delimiters: ['{|{', '}|}'],
             computed: {
-                randomToggle(){
-                    if (this.randomMoveInt === null){
+                randomToggle() {
+                    if (this.randomMoveInt === null) {
                         return "Begin"
-                    }
-                    else {
+                    } else {
                         return "Stop"
                     }
+                }
+            },
+            watch: {
+                randomDelay: function (newVal, oldVal) {
+                    this.beginRandomMovement()
                 }
             },
             methods: {
                 createMap() {
 
                     // create map
-                    var mymap = L.map('map',{fullscreenControl: true}).setView([this.map.homeLat, this.map.homeLon], 17);
+                    var mymap = L.map('map', {fullscreenControl: true}).setView([this.map.homeLat, this.map.homeLon], 17);
 
                     // add tiles
                     L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
@@ -84,15 +101,15 @@
                     var newLatLng = new L.LatLng(this.map.homeLat, this.map.markerLon);
                     this.marker.setLatLng(newLatLng);
                 },
-                randomMoveMarker(){
+                randomMoveMarker() {
                     var moveUp = Math.random() < 0.5;
                     var moveRight = Math.random() < 0.5;
-                    var latDelta = 0.000125;
-                    var lonDelta = 0.000125;
-                    if (!moveUp){
+                    var latDelta = parseFloat(this.randomDistance) / 1000000.0;
+                    var lonDelta = parseFloat(this.randomDistance) / 1000000.0;
+                    if (!moveUp) {
                         latDelta = latDelta * -1
                     }
-                    if (!moveRight){
+                    if (!moveRight) {
                         lonDelta = lonDelta * -1
                     }
                     this.map.markerLat += latDelta
@@ -100,13 +117,12 @@
                     var newLatLng = new L.LatLng(this.map.markerLat, this.map.markerLon);
                     this.marker.setLatLng(newLatLng);
                 },
-                beginRandomMovement(){
-                    if (this.randomMoveInt === null){
+                beginRandomMovement() {
+                    if (this.randomMoveInt === null) {
                         this.randomMoveInt = setInterval(() => {
                             this.randomMoveMarker()
-                        }, 250);
-                    }
-                    else {
+                        }, this.randomDelay);
+                    } else {
                         clearInterval(this.randomMoveInt);
                         this.randomMoveInt = null
                     }
