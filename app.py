@@ -12,7 +12,9 @@ import uuid
 from flask import Flask, request, jsonify, render_template, redirect, Response
 from flask_cors import CORS
 from flask_migrate import Migrate
+import geopy.distance as geopy_distance
 from gpx_converter import Converter
+import pandas as pd
 
 from api.models import (
     Bike,
@@ -234,6 +236,17 @@ def create_app():
                 },
             ]
             response["chart_data"] = {"labels": labels, "datasets": level_datasets, "speed_datasets": speed_datasets}
+
+            # add ghost rider
+            t10 = time.time()
+            ghost_lat, ghost_lon = None, None
+            # if ride.gpx_df is not None:
+            #     marks = ride.gpx_df[ride.gpx_df.mark == ride.completed]
+            #     if len(marks) > 0:
+            #         row = marks.iloc[0]
+            #         ghost_lat, ghost_lon = row.latitude, row.longitude
+            response["map"] = {"ghost_rider": {"latitude": ghost_lat, "longitude": ghost_lon}}
+            print(f"ghost rider elapsed: {time.time()-t10}")
 
             # return
             print(f"heartbeat elapsed: {time.time()-t1}")
@@ -522,6 +535,8 @@ def create_app():
         #########################################
         elif payload["ride_type"] == "gpx":
 
+            # TODO: move all to method in Ride
+
             # download file to tmp, then convert to dataframe in memory
             print("saving GPX to disk and loading as dataframe")
             uf = request.files["gpx_file"]
@@ -532,20 +547,34 @@ def create_app():
             os.remove(tmp_filepath)
             print(f"GPX loaded with {len(gpx_df)} data points")
 
-            # calculate distance window and running total
-            # TODO: loop through x2 window and geopy.distance()
+            # convert timestamps by serializing
+            gpx_df = Ride.gpx_df_from_serialized(json.loads(gpx_df.to_json()))
 
-            # convert gpx dataframe to JSON, then dictionary, for serialization
-            gpx_dict = json.loads(gpx_df.to_json())
+            # NOTE: slowish, rework
+            # calculate step and cumulative distances
+            gpx_df["step_distance"] = 0.0
+            for i, r in enumerate(gpx_df.itertuples()):
+                if i == 0:
+                    d = 0.0
+                else:
+                    lr = gpx_df.iloc[i - 1]
+                    d = geopy_distance.distance((lr.latitude, lr.longitude), (r.latitude, r.longitude)).feet
+                gpx_df.loc[str(i), "step_distance"] = d
+            gpx_df["cum_distance"] = gpx_df.step_distance.cumsum()
 
-            # reload dataframe to simulate
-            gpx_df = Ride.gpx_df_from_serialized(gpx_dict)
+            # set mark for aligning
+            min_time = gpx_df.time.min()
+            gpx_df["mark"] = (gpx_df.time - min_time) / 1000
+            gpx_df.mark = gpx_df.mark.astype(int)
 
             # handle duration
             duration = int((gpx_df.time.max() - gpx_df.time.min()) / 1000.0)
 
             # set program to NULL initially
             program = Ride.generate_program_from_gpx(gpx_df)
+
+            # convert gpx dataframe to JSON, then dictionary, for serialization
+            gpx_dict = json.loads(gpx_df.to_json())
 
         # handle unknown ride_type
         else:

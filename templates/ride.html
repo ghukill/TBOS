@@ -181,6 +181,15 @@
                             this.charts.rpm.data.datasets = hb.chart_data.speed_datasets
                             this.updateChart()
 
+                            // if map, update ghost rider
+                            if (
+                                this.rideType === 'gpx'
+                                && (hb.map.ghost_rider.latitude !== null && hb.map.ghost_rider.longitude !== null)
+                            ) {
+                                var newLatLng = new L.LatLng(hb.map.ghost_rider.latitude, hb.map.ghost_rider.longitude);
+                                this.map.layers.marker.setLatLng(newLatLng);
+                            }
+
                             // see if ride done
                             if (this.localCompleted >= this.rideDuration && !this.rideIsCompleted) {
                                 this.rideCompleted();
