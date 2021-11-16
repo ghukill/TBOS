@@ -762,18 +762,19 @@ class Ride(db.Model):
 
         # handle no program
         if self.program is None:
-            output.extend([[None, None, None] for _ in range(0, len(self.heartbeats))])
+            output.extend([[None, None, None, None] for _ in range(0, len(self.heartbeats))])
 
         # else, loop through segments and extend to per second
         else:
             output = []
             for segment in self.program:
-                output.extend([[segment[0], None, None] for _ in range(segment[1][0], segment[1][1])])
+                output.extend([[segment[0], None, None, None] for _ in range(segment[1][0], segment[1][1])])
 
         # interleave heartbeats
         for hb in self.heartbeats:
             output[hb.mark - 1][1] = hb.level
             output[hb.mark - 1][2] = hb.rpm
+            output[hb.mark - 1][3] = hb.mph
 
         print(f"full level data elapsed: {time.time()-t0}")
         return output
@@ -815,6 +816,10 @@ class Heartbeat(db.Model):
         except Exception as e:
             app.db.session.rollback()
             raise e
+
+    @property
+    def mph(self):
+        return self.data.get("speed", {}).get("mph")
 
 
 class PybJobQueue(db.Model):

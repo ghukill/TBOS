@@ -112,9 +112,15 @@
                         labels: [],
                         datasets: [
                             {
-                                label: 'program',
+                                label: 'rpm',
                                 data: [],
                                 borderColor: 'blue',
+                                borderWidth: 1,
+                            },
+                            {
+                                label: 'mph',
+                                data: [],
+                                borderColor: 'orange',
                                 borderWidth: 1,
                             },
                         ]
@@ -124,7 +130,7 @@
             },
 
             // wacky, but works!
-            map:{{ f.ride.get_gpx_map_details()|safe }}
+            map:{{ f.ride.get_gpx_map_details()|tojson }}
         }
 
         // create Vue
@@ -172,7 +178,7 @@
                             this.charts.level.data.labels = hb.chart_data.labels
                             this.charts.level.data.datasets = hb.chart_data.datasets
                             this.charts.rpm.data.labels = hb.chart_data.labels // use hb labels
-                            this.charts.rpm.data.datasets = hb.chart_data.rpm_dataset
+                            this.charts.rpm.data.datasets = hb.chart_data.speed_datasets
                             this.updateChart()
 
                             // see if ride done

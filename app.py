@@ -162,6 +162,16 @@ def create_app():
             response.update(bike.get_status(raise_exceptions=True))
             print(f"bike status elapsed: {time.time()-tb0}")
 
+            # set speed in data
+            if response["rpm"]["rpm"] == 0:
+                mph = 0
+                fps = 0
+            else:
+                rpm, level = response["rpm"]["rpm"], response["rm"]["level"]
+                mph = round((rpm / (21 - level)) + ((21 - level) * 0.5), 2)
+                fps = round(((5280 * mph) / 60 / 60), 2)
+            response["speed"] = {"mph": mph, "fps": fps}
+
             # get ride status
             tr0 = time.time()
             ride = Ride.current()
@@ -193,7 +203,7 @@ def create_app():
             # prepare chart data
             ride_data = ride.parse_recorded_timeseries()
             labels = [f"{str(x)}s" for x in range(1, len(ride_data) + 1)]
-            datasets = [
+            level_datasets = [
                 {
                     "label": "program",
                     "borderColor": "deeppink",
@@ -208,14 +218,22 @@ def create_app():
                     "data": [n[1] for n in ride_data],
                     "fill": True,
                 },
+            ]
+            speed_datasets = [
                 {
                     "label": "rpm",
                     "borderColor": "blue",
                     "borderWidth": 1,
                     "data": [{0: None}.get(n[2], n[2]) for n in ride_data],
                 },
+                {
+                    "label": "mph",
+                    "borderColor": "orange",
+                    "borderWidth": 1,
+                    "data": [{0: None}.get(n[3], n[3]) for n in ride_data],
+                },
             ]
-            response["chart_data"] = {"labels": labels, "datasets": datasets[:2], "rpm_dataset": [datasets[2]]}
+            response["chart_data"] = {"labels": labels, "datasets": level_datasets, "speed_datasets": speed_datasets}
 
             # return
             print(f"heartbeat elapsed: {time.time()-t1}")
@@ -513,6 +531,9 @@ def create_app():
             gpx_df = Converter(input_file=tmp_filepath).gpx_to_dataframe()
             os.remove(tmp_filepath)
             print(f"GPX loaded with {len(gpx_df)} data points")
+
+            # calculate distance window and running total
+            # TODO: loop through x2 window and geopy.distance()
 
             # convert gpx dataframe to JSON, then dictionary, for serialization
             gpx_dict = json.loads(gpx_df.to_json())
