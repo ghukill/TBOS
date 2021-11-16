@@ -64,7 +64,7 @@
                 createMap() {
 
                     // create map
-                    var mymap = L.map('map').setView([this.map.homeLat, this.map.homeLon], 17);
+                    var mymap = L.map('map',{fullscreenControl: true}).setView([this.map.homeLat, this.map.homeLon], 17);
 
                     // add tiles
                     L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
@@ -104,7 +104,7 @@
                     if (this.randomMoveInt === null){
                         this.randomMoveInt = setInterval(() => {
                             this.randomMoveMarker()
-                        }, 500);
+                        }, 250);
                     }
                     else {
                         clearInterval(this.randomMoveInt);
