@@ -480,26 +480,23 @@ class Ride(db.Model):
         Return GPX data as parsed dataframe
         """
 
-        if self.gpx is None:
-            return None
-
         # if not yet retrieved, retrieve
         if getattr(self, "_gpx_df", None) is None:
             print("loading GPX data as dataframe")
-            self._gpx_df = self.gpx_df_from_serialized(self.gpx)
+            df = pd.read_sql(
+                f"""
+                select * from gpx_data
+                where ride_uuid='{str(self.ride_uuid)}'
+                order by time;
+                """,
+                con=db.engine,
+            )
+            if len(df) == 0:
+                self._gpx_df = None
+            else:
+                self._gpx_df = df
 
         return self._gpx_df
-
-    @classmethod
-    def gpx_df_from_serialized(cls, df_dict):
-
-        """
-        Single point of conversion
-        """
-
-        df = pd.DataFrame.from_dict(df_dict)
-        df["time_parsed"] = df.time.apply(lambda x: datetime.datetime.fromtimestamp(x / 1000.0))
-        return df
 
     def get_gpx_map_details(self):
 
