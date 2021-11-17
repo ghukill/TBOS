@@ -677,16 +677,54 @@ class Ride(db.Model):
         return program
 
     @classmethod
-    def generate_program_from_gpx(cls, gpx_df):
+    def generate_program_from_gpx(cls, gpx_df, duration):
 
         """
         Generate ride from GPX data
-
-        :param gpx_df: Dataframe of gpx
-            - columns: time, latitude, longitude, altitude, time_parsed
+            - break into 15 segments
         """
 
-        pass
+        print("generating program for GPX data")
+
+        # calc altitude delta; exaggerate by x5
+        gpx_df["altitude_delta"] = 0.0
+        for i, r in enumerate(gpx_df.itertuples()):
+            if i == 0:
+                ad = 0.0
+            else:
+                lr = gpx_df.iloc[i - 1]
+                ad = round((r.altitude - lr.altitude) * 2, 2)
+            gpx_df.loc[i, "altitude_delta"] = ad
+        # gpx_df["cum_altitude_delta"] = round(gpx_df.altitude_delta.cumsum(), 2)
+
+        # loop through duration in chunks of segment_seconds; these become segments
+        segment_seconds = 15
+        program = []
+        for x in range(0, int(duration), segment_seconds):
+
+            # get time span
+            time_span = [x, x + segment_seconds]
+
+            # get cumulative altitude change
+            cum_altitude_delta = gpx_df[
+                (gpx_df.mark >= time_span[0]) & (gpx_df.mark < time_span[1])
+            ].altitude_delta.sum()
+
+            # equivalent level
+            level = round(cum_altitude_delta, 0) + 8
+            if level > 20:
+                level = 20
+            if level < 1:
+                level = 1
+
+            # create program segment
+            program.append([level, time_span])
+
+        # set last
+        program[-1][1][1] = int(duration)
+
+        # return
+        return program
 
     def handle_program_segment(self, response, bike):
 
@@ -757,11 +795,12 @@ class Ride(db.Model):
         t0 = time.time()
 
         # init output
-        output = []
+        output = [[None, None, None, None] for x in range(0, int(self.duration))]
 
         # handle no program
         if self.program is None:
-            output.extend([[None, None, None, None] for _ in range(0, len(self.heartbeats))])
+            pass
+            # output.extend([[None, None, None, None] for _ in range(0, len(self.heartbeats))])
 
         # else, loop through segments and extend to per second
         else:
@@ -871,7 +910,7 @@ class Ride(db.Model):
         duration = int((gpx_df.time.max() - gpx_df.time.min()))
 
         # set program to NULL initially
-        program = cls.generate_program_from_gpx(gpx_df)
+        program = cls.generate_program_from_gpx(gpx_df, duration)
 
         # init and return ride
         return cls(
