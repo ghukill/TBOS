@@ -507,19 +507,22 @@ def create_app():
         # get input
         payload = request.form
 
+        # mint ride uuid
+        ride_uuid = str(uuid.uuid4())
+
         #########################################
         # RANDOM DURATION
         #########################################
         if payload["ride_type"] == "random_duration":
 
-            ride = Ride.create_random_duration_ride(payload, request)
+            ride = Ride.create_random_duration_ride(ride_uuid, payload, request)
 
         #########################################
         # GPX
         #########################################
         elif payload["ride_type"] == "gpx":
 
-            ride = Ride.create_gpx_ride(payload, request)
+            ride = Ride.create_gpx_ride(ride_uuid, payload, request)
 
         # handle unknown ride_type
         else:

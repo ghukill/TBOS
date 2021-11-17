@@ -468,10 +468,10 @@ class Ride(db.Model):
     completed = db.Column(db.Float, nullable=False, default=0.0)
     is_current = db.Column(db.Boolean, default=0, nullable=False)
     program = db.Column(db.JSON, nullable=True)
-    gpx = db.Column(db.JSON, nullable=True)
     last_segment = db.Column(db.JSON, nullable=True)
 
     heartbeats = relationship("Heartbeat", back_populates="ride")
+    # gpx_datas = relationship("GPXData", back_populates="ride")
 
     @property
     def gpx_df(self):
@@ -790,7 +790,7 @@ class Ride(db.Model):
         pass
 
     @classmethod
-    def create_random_duration_ride(cls, payload, request):
+    def create_random_duration_ride(cls, ride_uuid, payload, request):
 
         """
         Create random level, duration ride
@@ -804,7 +804,7 @@ class Ride(db.Model):
         # handle random program
         random = {"on": True, "off": False}[payload.get("random", "on")]
         if random:
-            program = Ride.generate_random_program(
+            program = cls.generate_random_program(
                 duration,
                 low=int(payload.get("level_low", 1)),
                 high=int(payload.get("level_high", 20)),
@@ -814,16 +814,15 @@ class Ride(db.Model):
             program = None
 
         # init and return ride
-        return Ride(
-            ride_uuid=str(uuid.uuid4()),
+        return cls(
+            ride_uuid=ride_uuid,
             name=payload.get("name", None),
             duration=duration,
             program=program,
-            gpx=None,
         )
 
     @classmethod
-    def create_gpx_ride(cls, payload, request):
+    def create_gpx_ride(cls, ride_uuid, payload, request):
 
         """
         Create GPX path ride
@@ -841,10 +840,11 @@ class Ride(db.Model):
         os.remove(tmp_filepath)
         print(f"GPX loaded with {len(gpx_df)} data points")
 
-        # convert timestamps by serializing
-        gpx_df = Ride.gpx_df_from_serialized(json.loads(gpx_df.to_json()))
+        # convert time to timestamp
+        # NOTE: this sets to seconds, not milliseconds
+        gpx_df.time = gpx_df.time.apply(lambda x: int(x.timestamp()))
 
-        # NOTE: slowish, rework
+        # NOTE: slowish, consider reworking
         # calculate step and cumulative distances
         gpx_df["step_distance"] = 0.0
         for i, r in enumerate(gpx_df.itertuples()):
@@ -853,30 +853,35 @@ class Ride(db.Model):
             else:
                 lr = gpx_df.iloc[i - 1]
                 d = geopy_distance.distance((lr.latitude, lr.longitude), (r.latitude, r.longitude)).feet
-            gpx_df.loc[str(i), "step_distance"] = d
+            gpx_df.loc[i, "step_distance"] = d
         gpx_df["cum_distance"] = gpx_df.step_distance.cumsum()
 
         # set mark for aligning
         min_time = gpx_df.time.min()
-        gpx_df["mark"] = (gpx_df.time - min_time) / 1000
+        gpx_df["mark"] = gpx_df.time - min_time
         gpx_df.mark = gpx_df.mark.astype(int)
 
+        # add ride UUID
+        gpx_df["ride_uuid"] = ride_uuid
+
+        # mint uuids
+        gpx_df["point_uuid"] = [str(uuid.uuid4()) for x in range(0, len(gpx_df))]
+
+        # save rows to GPXData
+        gpx_df.to_sql("gpx_data", con=db.engine, index=False, if_exists="append")
+
         # handle duration
-        duration = int((gpx_df.time.max() - gpx_df.time.min()) / 1000.0)
+        duration = int((gpx_df.time.max() - gpx_df.time.min()))
 
         # set program to NULL initially
-        program = Ride.generate_program_from_gpx(gpx_df)
-
-        # convert gpx dataframe to JSON, then dictionary, for serialization
-        gpx_dict = json.loads(gpx_df.to_json())
+        program = cls.generate_program_from_gpx(gpx_df)
 
         # init and return ride
-        return Ride(
-            ride_uuid=str(uuid.uuid4()),
+        return cls(
+            ride_uuid=ride_uuid,
             name=payload.get("name", None),
             duration=duration,
             program=program,
-            gpx=gpx_dict,
         )
 
 
@@ -1196,3 +1201,30 @@ class HeartbeatSchema(SQLAlchemyAutoSchema):
         model = Heartbeat
         include_relationships = True
         load_instance = True
+
+
+class GPXData(db.Model):
+
+    """
+    Model for GPX data for a ride
+    """
+
+    __tablename__ = "gpx_data"
+
+    # linkage
+    point_uuid = db.Column(db.String, primary_key=True, default=str(uuid.uuid4()))
+    ride_uuid = db.Column(db.String, ForeignKey("ride.ride_uuid"), nullable=False)
+
+    # GPX provided
+    time = db.Column(db.Integer, nullable=False)
+    latitude = db.Column(db.Float, nullable=False)
+    longitude = db.Column(db.Float, nullable=False)
+    altitude = db.Column(db.Float, nullable=False)
+
+    # derived
+    step_distance = db.Column(db.Float, nullable=True)
+    cum_distance = db.Column(db.Float, nullable=True)
+    mark = db.Column(db.Integer, nullable=True)
+
+    # relationships
+    # ride = relationship("Ride", back_populates="gpx_datas")
