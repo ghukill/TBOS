@@ -170,7 +170,8 @@ def create_app():
                 fps = 0
             else:
                 rpm, level = response["rpm"]["rpm"], response["rm"]["level"]
-                mph = round((rpm / (21 - level)) + ((21 - level) * 0.5), 2)
+                # mph = round((rpm / (21 - level)) + ((21 - level) * 0.5), 2)
+                mph = round(rpm / ((20 / level) * 2.5), 2)
                 fps = round(((5280 * mph) / 60 / 60), 2)
             response["speed"] = {"mph": mph, "fps": fps}
 
@@ -187,11 +188,16 @@ def create_app():
                 ta0 = time.time()
                 payload = parse_query_payload(request)
                 print(payload)
+                prev_completed = ride.completed
                 ride.completed = payload["localRide"]["completed"]
 
                 # handle program segment if program exists
                 segment = ride.handle_program_segment(response, bike)
                 ride.last_segment = segment
+
+                # bump cumulative distance
+                ride.cum_distance += (payload["localRide"]["completed"] - prev_completed) * response["speed"]["fps"]
+                print(f"new cumulative distance: {ride.cum_distance}")
 
                 ride.save()
                 print(f"ride update elapsed: {time.time() - ta0}")
@@ -245,8 +251,13 @@ def create_app():
                 if len(marks) > 0:
                     row = marks.iloc[0]
                     ghost_lat, ghost_lon = row.latitude, row.longitude
-            response["map"] = {"ghost_rider": {"latitude": ghost_lat, "longitude": ghost_lon}}
-            print(f"ghost rider elapsed: {time.time()-t10}")
+            # active rider
+            close_df = ride.gpx_df.iloc[(ride.gpx_df["cum_distance"] - ride.cum_distance).abs().argsort()[:1]]
+            response["map"] = {
+                "ghost_rider": {"latitude": ghost_lat, "longitude": ghost_lon},
+                "active_rider": {"latitude": close_df.iloc[0].latitude, "longitude": close_df.iloc[0].longitude},
+            }
+            print(f"rider elapsed: {time.time()-t10}")
 
             # return
             print(f"heartbeat elapsed: {time.time()-t1}")

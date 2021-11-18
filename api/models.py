@@ -303,7 +303,7 @@ class Bike(db.Model):
     @property
     def random_virtual_rpm(self):
 
-        return (random.randint(50, 100)) + random.random()
+        return (random.randint(70, 85)) + random.random()
 
     def _generate_virtual_status(self, level=10):
 
@@ -466,6 +466,7 @@ class Ride(db.Model):
     date_end = db.Column(db.DateTime, nullable=True, default=None)
     duration = db.Column(db.Float, nullable=False, default=30.0)
     completed = db.Column(db.Float, nullable=False, default=0.0)
+    cum_distance = db.Column(db.Float, nullable=False, default=0.0)
     is_current = db.Column(db.Boolean, default=0, nullable=False)
     program = db.Column(db.JSON, nullable=True)
     last_segment = db.Column(db.JSON, nullable=True)
