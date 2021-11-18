@@ -689,16 +689,24 @@ class Ride(db.Model):
         # calc altitude delta; exaggerate by x5
         gpx_df["altitude_delta"] = 0.0
         for i, r in enumerate(gpx_df.itertuples()):
+
+            # first step
             if i == 0:
                 ad = 0.0
+
+            # no movement
+            elif r.step_distance < 3:
+                ad = 0.0
+
             else:
                 lr = gpx_df.iloc[i - 1]
-                ad = round((r.altitude - lr.altitude) * 2, 2)
+                ad = round((r.altitude - lr.altitude) * 2.2, 2)
+
+            # set ad
             gpx_df.loc[i, "altitude_delta"] = ad
-        # gpx_df["cum_altitude_delta"] = round(gpx_df.altitude_delta.cumsum(), 2)
 
         # loop through duration in chunks of segment_seconds; these become segments
-        segment_seconds = 15
+        segment_seconds = 10
         program = []
         for x in range(0, int(duration), segment_seconds):
 
