@@ -475,6 +475,17 @@ class Ride(db.Model):
     # gpx_datas = relationship("GPXData", back_populates="ride")
 
     @property
+    def total_distance(self):
+
+        """
+        If GPX ride, provide total distance
+        """
+        if self.gpx_df is not None:
+            return self.gpx_df.iloc[-1].cum_distance
+        else:
+            return 0.0
+
+    @property
     def gpx_df(self):
 
         """

@@ -252,10 +252,13 @@ def create_app():
                     row = marks.iloc[0]
                     ghost_lat, ghost_lon = row.latitude, row.longitude
             # active rider
-            close_df = ride.gpx_df.iloc[(ride.gpx_df["cum_distance"] - ride.cum_distance).abs().argsort()[:1]]
+            active_lat, active_lon = None, None
+            if ride.gpx_df is not None:
+                close_df = ride.gpx_df.iloc[(ride.gpx_df["cum_distance"] - ride.cum_distance).abs().argsort()[:1]]
+                active_lat, active_lon = close_df.iloc[0].latitude, close_df.iloc[0].longitude
             response["map"] = {
                 "ghost_rider": {"latitude": ghost_lat, "longitude": ghost_lon},
-                "active_rider": {"latitude": close_df.iloc[0].latitude, "longitude": close_df.iloc[0].longitude},
+                "active_rider": {"latitude": active_lat, "longitude": active_lon},
             }
             print(f"rider elapsed: {time.time()-t10}")
 

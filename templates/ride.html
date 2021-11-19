@@ -25,10 +25,14 @@
                 </td>
             </tr>
             <tr>
-                <td>Time:</td>
-                <td><code style="color:deeppink;">{|{ makePrettyTime(localCompleted) }|} / {|{
-                    makePrettyTime({{ f.ride.duration }}) }|} ({|{ percentComplete
-                    }|}%)</code></td>
+                <td>Progress:</td>
+                <td>
+                    <code style="color:deeppink;">{|{ makePrettyTime(localCompleted) }|} / {|{
+                        makePrettyTime({{ f.ride.duration }}) }|} ({|{ percentComplete
+                        }|}%)<span v-if="rideType == 'gpx'">, {|{ rideDistance.cum }|}mi / {|{ rideDistance.total }|}mi ({|{ rideDistance.percent
+                            }|}%)</span>
+                    </code>
+                </td>
             </tr>
             <tr>
                 <td>Level:</td>
@@ -41,8 +45,8 @@
                 </td>
             </tr>
             <tr>
-                <td>RPM:</td>
-                <td><code style="color:deeppink;">{|{ bike.reported.rpm.rpm }|}</code></td>
+                <td>Speed:</td>
+                <td><code style="color:deeppink;">{|{ Math.round((bike.reported.rpm.rpm) * 100) / 100 }|}rpm, {|{ bike.reported.speed.mph }|}mph</code></td>
             </tr>
             </tbody>
         </table>
@@ -77,12 +81,18 @@
             rideType: '{{ f.ride.ride_type }}',
             rideDuration: {{ f.ride.duration }},
             localCompleted: {{ f.ride.completed }},
+            cumDistance: {{ f.ride.cum_distance }},
+            totalDistance: {{ f.ride.total_distance }},
             rideIsCompleted: false,
             heartbeatInterval: null,
             queuedHeartbeats: 0,
             bike: {
                 level: null,
-                reported: {rm: {level: null, current: null}, rpm: {rpm: null}}
+                reported: {
+                    rm: {level: null, current: null},
+                    rpm: {rpm: null},
+                    speed: {mph:null, fps:null}
+                }
             },
             currentProgramSegment: {level: null, num: null, window: []},
             charts: {
@@ -147,6 +157,21 @@
                 },
                 chartRpmData() {
                     return this.charts.rpm.data;
+                },
+                rideDistance() {
+                    var cumDistanceMiles = 0
+                    if (this.cumDistance > 0) {
+                        cumDistanceMiles = Math.round((this.cumDistance / 5280) * 100) / 100
+                    }
+                    var totalDistanceMiles = 0
+                    if (this.totalDistance > 0) {
+                        totalDistanceMiles = Math.round((this.totalDistance / 5280) * 100) / 100
+                    }
+                    return {
+                        cum: cumDistanceMiles,
+                        total: totalDistanceMiles,
+                        percent: Math.round((cumDistanceMiles / totalDistanceMiles) * 100) / 100
+                    }
                 }
             },
             methods: {
@@ -160,6 +185,10 @@
                             this.bike.reported.rm.level = hb.rm.level
                             this.bike.reported.rm.current = hb.rm.current
                             this.bike.reported.rpm.rpm = hb.rpm.rpm
+                            this.bike.reported.speed = hb.speed
+
+                            // update distance
+                            this.cumDistance = hb.ride.cum_distance
 
                             // set initial level from first heartbeat
                             if (this.bike.level == null) {
@@ -168,7 +197,7 @@
 
                             // segments
                             if (hb.ride.last_segment != null && hb.ride.last_segment.is_new) {
-                                if (hb.ride.last_segment.level != this.bike.level) {
+                                if (hb.ride.last_segment.level !== this.bike.level) {
                                     this.bike.level = hb.ride.last_segment.level
                                     this.programSegmentChange(hb.ride.last_segment)
                                 }
@@ -181,25 +210,32 @@
                             this.charts.rpm.data.datasets = hb.chart_data.speed_datasets
                             this.updateChart()
 
-                            // if map, update ghost and active rider
-                            if (
-                                this.rideType === 'gpx'
-                                && (hb.map.ghost_rider.latitude !== null && hb.map.ghost_rider.longitude !== null)
-                            ) {
-                                var newLatLng = new L.LatLng(hb.map.ghost_rider.latitude, hb.map.ghost_rider.longitude);
-                                this.map.layers.marker.setLatLng(newLatLng);
-                            }
-                            if (
-                                this.rideType === 'gpx'
-                                && (hb.map.active_rider.latitude !== null && hb.map.active_rider.longitude !== null)
-                            ) {
-                                var newLatLng = new L.LatLng(hb.map.active_rider.latitude, hb.map.active_rider.longitude);
-                                this.map.layers.markerRider.setLatLng(newLatLng);
+                            // GPX
+                            if (this.rideType === 'gpx') {
+
+                                // if map, update ghost and active rider
+                                if (hb.map.ghost_rider.latitude !== null && hb.map.ghost_rider.longitude !== null) {
+                                    var newLatLng = new L.LatLng(hb.map.ghost_rider.latitude, hb.map.ghost_rider.longitude);
+                                    this.map.layers.marker.setLatLng(newLatLng);
+                                }
+                                if (hb.map.active_rider.latitude !== null && hb.map.active_rider.longitude !== null) {
+                                    var newLatLng2 = new L.LatLng(hb.map.active_rider.latitude, hb.map.active_rider.longitude);
+                                    this.map.layers.markerRider.setLatLng(newLatLng2);
+                                }
+
+                                // see if ride done
+                                if (this.cumDistance >= this.totalDistance && !this.rideIsCompleted) {
+                                    this.rideCompleted();
+                                }
+
                             }
 
-                            // see if ride done
-                            if (this.localCompleted >= this.rideDuration && !this.rideIsCompleted) {
-                                this.rideCompleted();
+                            // Duration
+                            else {
+                                // see if ride done
+                                if (this.localCompleted >= this.rideDuration && !this.rideIsCompleted) {
+                                    this.rideCompleted();
+                                }
                             }
 
                         })
