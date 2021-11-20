@@ -76,6 +76,14 @@
     <!-- GPX map -->
     <section v-if="rideType === 'gpx'">
         <div id="map"></div>
+        <div style="margin-top:15px;">
+        <fieldset>
+            <label for="followActive">
+                <input v-model="followActive" type="checkbox" id="followActive" name="followActive" role="switch">
+                Follow
+            </label>
+        </fieldset>
+        </div>
     </section>
 
 {% endblock %}
@@ -87,7 +95,8 @@
 
         // set data
         var data = {
-            playAudio:true,
+            followActive: true,
+            playAudio: true,
             rideType: '{{ f.ride.ride_type }}',
             rideDuration: {{ f.ride.duration }},
             localCompleted: {{ f.ride.completed }},
@@ -233,6 +242,11 @@
                                     this.map.layers.markerRider.setLatLng(newLatLng2);
                                 }
 
+                                // pan to active if following
+                                if (this.followActive){
+                                    this.map.mapObj.panTo(this.map.layers.markerRider.getLatLng());
+                                }
+
                                 // see if ride done
                                 if (this.cumDistance >= this.totalDistance && !this.rideIsCompleted) {
                                     this.rideCompleted();
@@ -356,7 +370,7 @@
                         })
                 },
                 async polly(text) {
-                    if (this.playAudio){
+                    if (this.playAudio) {
                         var a = new Audio(`/gui/polly?text="${text}"`);
                         a.play();
                     }
@@ -397,6 +411,7 @@
                         fullscreenControl: true
                     }
                     var mymap = L.map('map', mapOptions);
+                    this.map.mapObj = mymap
 
                     // set to bounds
                     mymap.fitBounds(this.map.bbox);
