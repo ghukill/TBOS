@@ -2,7 +2,7 @@
 {% block head_mixins %}
     <style>
         #map {
-            height: 640px;
+            height: 480px;
         }
 
         #map a[role=button] {
@@ -180,7 +180,7 @@
                     return {
                         cum: cumDistanceMiles,
                         total: totalDistanceMiles,
-                        percent: Math.round((cumDistanceMiles / totalDistanceMiles) * 100) / 100
+                        percent: Math.round((cumDistanceMiles / totalDistanceMiles) * 100)
                     }
                 }
             },
@@ -342,7 +342,7 @@
                 async adjustLevel(delta) {
                     this.bike.level = this.bike.level + delta
 
-                    this.polly(`Going to level ${this.bike.level}`)
+                    {#this.polly(`Going to level ${this.bike.level}`)#}
 
                     if (this.bike.level < 1) {
                         this.bike.level = 1
@@ -364,7 +364,7 @@
                 programSegmentChange(last_segment) {
                     console.log(last_segment)
                     if (this.currentProgramSegment.num != last_segment.num) {
-                        this.polly(`Program, level ${last_segment.level}`);
+                        {#this.polly(`Program, level ${last_segment.level}`);#}
                     }
                     this.currentProgramSegment.level = last_segment.level;
                     this.currentProgramSegment.num = last_segment.num;

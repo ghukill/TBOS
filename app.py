@@ -164,17 +164,6 @@ def create_app():
             response.update(bike.get_status(raise_exceptions=True))
             print(f"bike status elapsed: {time.time()-tb0}")
 
-            # set speed in data
-            if response["rpm"]["rpm"] == 0:
-                mph = 0
-                fps = 0
-            else:
-                rpm, level = response["rpm"]["rpm"], response["rm"]["level"]
-                # mph = round((rpm / (21 - level)) + ((21 - level) * 0.5), 2)
-                mph = round(rpm / ((20 / level) * 2.5), 2)
-                fps = round(((5280 * mph) / 60 / 60), 2)
-            response["speed"] = {"mph": mph, "fps": fps}
-
             # get ride status
             tr0 = time.time()
             ride = Ride.current()
@@ -182,6 +171,18 @@ def create_app():
                 ride = Ride.get_free_ride()
             response.update(ride.get_status())
             print(f"ride status elapsed: {time.time() - tr0}")
+
+            # set speed in data
+            if response["rpm"]["rpm"] == 0:
+                mph = 0
+                fps = 0
+            else:
+                rpm, level = response["rpm"]["rpm"], response["rm"]["level"]
+                if ride.ride_type == "gpx":  # QUESTION: is this inversion right?
+                    level = 8 + (8 - level)  # invert resistance and hill
+                mph = round(rpm / ((20 / level) * 2.5), 2)
+                fps = round(((5280 * mph) / 60 / 60), 2)
+            response["speed"] = {"mph": mph, "fps": fps}
 
             # if POST request, update Ride information
             if request.method == "POST":
@@ -243,24 +244,33 @@ def create_app():
             ]
             response["chart_data"] = {"labels": labels, "datasets": level_datasets, "speed_datasets": speed_datasets}
 
-            # add ghost rider
-            t10 = time.time()
-            ghost_lat, ghost_lon = None, None
-            if ride.gpx_df is not None:
-                marks = ride.gpx_df[ride.gpx_df.mark == ride.completed]
-                if len(marks) > 0:
-                    row = marks.iloc[0]
-                    ghost_lat, ghost_lon = row.latitude, row.longitude
-            # active rider
-            active_lat, active_lon = None, None
-            if ride.gpx_df is not None:
-                close_df = ride.gpx_df.iloc[(ride.gpx_df["cum_distance"] - ride.cum_distance).abs().argsort()[:1]]
-                active_lat, active_lon = close_df.iloc[0].latitude, close_df.iloc[0].longitude
-            response["map"] = {
-                "ghost_rider": {"latitude": ghost_lat, "longitude": ghost_lon},
-                "active_rider": {"latitude": active_lat, "longitude": active_lon},
-            }
-            print(f"rider elapsed: {time.time()-t10}")
+            # determine location and adjust level for GPX ride (TODO: move to method)
+            if ride.ride_type == "gpx":
+                # add ghost and active rider data
+                t10 = time.time()
+                ghost_lat, ghost_lon = None, None
+                if ride.gpx_df is not None:
+                    marks = ride.gpx_df[ride.gpx_df.mark == ride.completed]
+                    if len(marks) > 0:
+                        row = marks.iloc[0]
+                        ghost_lat, ghost_lon = row.latitude, row.longitude
+                # active rider
+                active_lat, active_lon = None, None
+                if ride.gpx_df is not None:
+                    nearest_gpx_point = ride.gpx_df.iloc[
+                        (ride.gpx_df["cum_distance"] - ride.cum_distance).abs().argsort()[:1]
+                    ].iloc[0]
+                    active_lat, active_lon = nearest_gpx_point.latitude, nearest_gpx_point.longitude
+                response["map"] = {
+                    "ghost_rider": {"latitude": ghost_lat, "longitude": ghost_lon},
+                    "active_rider": {"latitude": active_lat, "longitude": active_lon},
+                }
+                print(f"rider elapsed: {time.time()-t10}")
+
+                # adjust level to match active rider against program for that location
+                # NOTE: use ride method segment = self.get_program_segment(mark)
+                active_rider_segment = ride.get_program_segment(nearest_gpx_point.mark)
+                bike.adjust_level(active_rider_segment["level"])
 
             # return
             print(f"heartbeat elapsed: {time.time()-t1}")

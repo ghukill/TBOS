@@ -303,7 +303,7 @@ class Bike(db.Model):
     @property
     def random_virtual_rpm(self):
 
-        return (random.randint(70, 85)) + random.random()
+        return (random.randint(70, 80)) + random.random()
 
     def _generate_virtual_status(self, level=10):
 
@@ -773,11 +773,14 @@ class Ride(db.Model):
 
             # if current level != segment level, adjust
             if cur_level != segment["level"]:
-                print(f"adjusting level to match segment: {cur_level} --> {segment['level']}")
+                if self.ride_type != "gpx":
+                    print(f"adjusting level to match segment: {cur_level} --> {segment['level']}")
 
-                # if new segment, adjust level (allows in-level manual adjusts to be sticky)
-                if segment["is_new"]:
-                    segment["adjust_level"] = bike.adjust_level(segment["level"])
+                    # if new segment, adjust level (allows in-level manual adjusts to be sticky)
+                    if segment["is_new"]:
+                        segment["adjust_level"] = bike.adjust_level(segment["level"])
+                else:
+                    print(f"skipping program level adjustment, GPX ride")
 
             # return segment
             return segment
