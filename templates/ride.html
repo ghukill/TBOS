@@ -23,6 +23,14 @@
                     <a v-else style="background-color: red; border-color: red;" role="button"
                        @click="stopApiHeartbeat()">Stop</a>
                 </td>
+                <td>
+                    <fieldset>
+                        <label for="playAudio">
+                            <input v-model="playAudio" type="checkbox" id="playAudio" name="playAudio" role="switch">
+                            Audio
+                        </label>
+                    </fieldset>
+                </td>
             </tr>
             <tr>
                 <td>Progress:</td>
@@ -46,7 +54,8 @@
             </tr>
             <tr>
                 <td>Speed:</td>
-                <td><code style="color:deeppink;">{|{ Math.round((bike.reported.rpm.rpm) * 100) / 100 }|}rpm, {|{ bike.reported.speed.mph }|}mph</code></td>
+                <td><code style="color:deeppink;">{|{ Math.round((bike.reported.rpm.rpm) * 100) / 100 }|}rpm, {|{
+                    bike.reported.speed.mph }|}mph</code></td>
             </tr>
             </tbody>
         </table>
@@ -78,6 +87,7 @@
 
         // set data
         var data = {
+            playAudio:true,
             rideType: '{{ f.ride.ride_type }}',
             rideDuration: {{ f.ride.duration }},
             localCompleted: {{ f.ride.completed }},
@@ -91,7 +101,7 @@
                 reported: {
                     rm: {level: null, current: null},
                     rpm: {rpm: null},
-                    speed: {mph:null, fps:null}
+                    speed: {mph: null, fps: null}
                 }
             },
             currentProgramSegment: {level: null, num: null, window: []},
@@ -346,8 +356,10 @@
                         })
                 },
                 async polly(text) {
-                    var a = new Audio(`/gui/polly?text="${text}"`);
-                    a.play();
+                    if (this.playAudio){
+                        var a = new Audio(`/gui/polly?text="${text}"`);
+                        a.play();
+                    }
                 },
                 programSegmentChange(last_segment) {
                     console.log(last_segment)

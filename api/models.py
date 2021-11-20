@@ -698,7 +698,8 @@ class Ride(db.Model):
 
         print("generating program for GPX data")
 
-        # calc altitude delta; exaggerate by x5
+        # calc altitude delta
+        step_distance_mean = gpx_df.step_distance.mean()
         gpx_df["altitude_delta"] = 0.0
         for i, r in enumerate(gpx_df.itertuples()):
 
@@ -713,6 +714,7 @@ class Ride(db.Model):
             else:
                 lr = gpx_df.iloc[i - 1]
                 ad = round((r.altitude - lr.altitude) * 2.2, 2)
+                # ad = round(((r.altitude - lr.altitude) * 2.2) * ((step_distance_mean - r.step_distance) / 10 + 1), 2)
 
             # set ad
             gpx_df.loc[i, "altitude_delta"] = ad
@@ -830,9 +832,12 @@ class Ride(db.Model):
 
         # interleave heartbeats
         for hb in self.heartbeats:
-            output[hb.mark - 1][1] = hb.level
-            output[hb.mark - 1][2] = hb.rpm
-            output[hb.mark - 1][3] = hb.mph
+            try:
+                output[hb.mark - 1][1] = hb.level
+                output[hb.mark - 1][2] = hb.rpm
+                output[hb.mark - 1][3] = hb.mph
+            except:
+                output.append([hb.mark, hb.level, hb.rpm, hb.mph])
 
         print(f"full level data elapsed: {time.time()-t0}")
         return output
