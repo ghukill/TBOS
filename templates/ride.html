@@ -195,6 +195,16 @@
             },
             methods: {
                 performHeartbeat: function () {
+
+                    // ensure heartbeats are not too backed up
+                    var hbLimit = 15;
+                    if (this.queuedHeartbeats > hbLimit) {
+                        this.stopApiHeartbeat();
+                        alert(`WARNING: queued heartbeats is > ${hbLimit}, stopped ride`)
+                        return null;
+                    }
+
+                    // else, perform
                     axios.post('/api/heartbeat', {"localRide": {"completed": this.localCompleted}})
                         .then(response => {
                             this.queuedHeartbeats -= 1;
