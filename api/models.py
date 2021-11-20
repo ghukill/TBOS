@@ -720,7 +720,7 @@ class Ride(db.Model):
             gpx_df.loc[i, "altitude_delta"] = ad
 
         # loop through duration in chunks of segment_seconds; these become segments
-        segment_seconds = 10
+        segment_seconds = int(duration / 200)
         program = []
         for x in range(0, int(duration), segment_seconds):
 
