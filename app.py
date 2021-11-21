@@ -270,7 +270,10 @@ def create_app():
                 # adjust level to match active rider against program for that location
                 # NOTE: use ride method segment = self.get_program_segment(mark)
                 active_rider_segment = ride.get_program_segment(nearest_gpx_point.mark)
-                bike.adjust_level(active_rider_segment["level"])
+
+                # adjust level when active rider in location
+                if int(response["rm"]["level"]) != active_rider_segment["level"]:
+                    bike.adjust_level(active_rider_segment["level"])
 
             # return
             print(f"heartbeat elapsed: {time.time()-t1}")

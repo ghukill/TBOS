@@ -22,6 +22,7 @@
                        style="background-color: green; border-color: green;" @click="startApiHeartbeat()">Start</a>
                     <a v-else style="background-color: red; border-color: red;" role="button"
                        @click="stopApiHeartbeat()">Stop</a>
+                    <a @click="performHeartbeat" class="contrast outline" role="button">❤️</a>
                 </td>
                 <td>
                     <fieldset>
@@ -386,7 +387,6 @@
                     }
                 },
                 programSegmentChange(last_segment) {
-                    console.log(last_segment)
                     if (this.currentProgramSegment.num != last_segment.num) {
                         {#this.polly(`Program, level ${last_segment.level}`);#}
                     }

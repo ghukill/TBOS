@@ -374,7 +374,7 @@ class Bike(db.Model):
         # create and run job
         t0 = time.time()
         if self.is_virtual:
-            time.sleep(1)
+            time.sleep(abs(self.last_status["rm"]["level"] - level))
             response = self._generate_virtual_status(level)
         else:
 
@@ -473,7 +473,6 @@ class Ride(db.Model):
     last_segment = db.Column(db.JSON, nullable=True)
 
     heartbeats = relationship("Heartbeat", back_populates="ride")
-    # gpx_datas = relationship("GPXData", back_populates="ride")
 
     @property
     def total_distance(self):
