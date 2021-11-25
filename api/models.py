@@ -1079,7 +1079,6 @@ class Heartbeat(db.Model):
             response["speed"] = {"mph": mph, "fps": fps}
 
             # if POST request, update Ride information
-            segment = None
             if request.method == "POST":
                 ta0 = time.time()
                 payload = parse_query_payload(request)
@@ -1162,11 +1161,7 @@ class Heartbeat(db.Model):
                 }
 
                 # adjust level to match active rider against program for that location
-                # NOTE: use ride method segment = self.get_program_segment(mark)
-                if segment is not None:
-                    active_rider_segment = segment
-                else:
-                    active_rider_segment = ride.get_program_segment(nearest_gpx_point.mark)
+                active_rider_segment = ride.get_program_segment(nearest_gpx_point.mark)
                 print(f"rider positions elapsed: {time.time() - t10}")
 
                 # adjust level when active rider in location
