@@ -58,6 +58,14 @@
                 <td><code style="color:deeppink;">{|{ Math.round((bike.reported.rpm.rpm) * 100) / 100 }|}rpm, {|{
                     bike.reported.speed.mph }|}mph</code></td>
             </tr>
+            <tr>
+                <td>Debug</td>
+                <td>
+                    <label for="simulateRpm">Simulate RPM ({|{ simulateRpm }|})
+                      <input v-model="simulateRpm" type="range" min="-1" max="200" id="simulateRpm" name="simulateRpm">
+                    </label>
+                </td>
+            </tr>
             </tbody>
         </table>
     </section>
@@ -96,6 +104,7 @@
 
         // set data
         var data = {
+            simulateRpm:-1,
             followActive: true,
             playAudio: true,
             rideType: '{{ f.ride.ride_type }}',
@@ -205,8 +214,17 @@
                         return null;
                     }
 
+                    // simulate RPM
+                    var simulateRpm = null
+                    if (parseInt(this.simulateRpm) >= 0){
+                        simulateRpm = parseInt(this.simulateRpm)
+                    }
+
                     // else, perform
-                    axios.post('/api/heartbeat', {"localRide": {"completed": this.localCompleted}})
+                    axios.post('/api/heartbeat', {
+                        "localRide": {"completed": this.localCompleted},
+                        "simulate_rpm":simulateRpm
+                    })
                         .then(response => {
                             this.queuedHeartbeats -= 1;
                             let hb = response.data

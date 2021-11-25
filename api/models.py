@@ -320,7 +320,7 @@ class Bike(db.Model):
         # app.db.session.commit()
         return virtual_status
 
-    def get_status(self, raise_exceptions=False):
+    def get_status(self, raise_exceptions=False, simulate_rpm=None):
 
         """
         Get status report from embedded controller about Bike
@@ -352,6 +352,10 @@ class Bike(db.Model):
 
         # update level
         self._level = response["rm"]["level"]
+
+        # DEBUG: artificially simulate rpm
+        if simulate_rpm is not None:
+            response["rpm"]["rpm"] = simulate_rpm
 
         # save to db
         self.last_status = response
@@ -1049,7 +1053,8 @@ class Heartbeat(db.Model):
 
             # get bike status
             tb0 = time.time()
-            response.update(bike.get_status(raise_exceptions=True))
+            simulate_rpm = request.json.get("simulate_rpm")
+            response.update(bike.get_status(raise_exceptions=True, simulate_rpm=simulate_rpm))
             print(f"bike status elapsed: {time.time()-tb0}")
 
             # get ride status
