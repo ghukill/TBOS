@@ -59,11 +59,23 @@
                     bike.reported.speed.mph }|}mph</code></td>
             </tr>
             <tr>
-                <td>Debug</td>
-                <td>
-                    <label for="simulateRpm">Simulate RPM ({|{ simulateRpm }|})
-                      <input v-model="simulateRpm" type="range" min="-1" max="200" id="simulateRpm" name="simulateRpm">
-                    </label>
+                <td @click="showDebug = !showDebug;">Debug</td>
+                <td v-if="showDebug">
+                    <section>
+                        <label for="simulateRpm">Simulate RPM: <code>{|{ simulateRpm }|}</code>
+                            <input v-model="simulateRpm" type="range" min="-1" max="200" id="simulateRpm"
+                                   name="simulateRpm">
+                        </label>
+                    </section>
+                    <section>
+                        <label for="allowedQueuedHbs">Queued HBs: <code>{|{ queuedHeartbeats }|}</code>, Allowed: <code>{|{ allowedQueuedHbs }|}</code>
+                            <input v-model="allowedQueuedHbs" type="range" min="1" max="20" id="allowedQueuedHbs"
+                                   name="allowedQueuedHbs">
+                        </label>
+                    </section>
+                </td>
+                <td v-else>
+                    ...
                 </td>
             </tr>
             </tbody>
@@ -86,12 +98,12 @@
     <section v-if="rideType === 'gpx'">
         <div id="map"></div>
         <div style="margin-top:15px;">
-        <fieldset>
-            <label for="followActive">
-                <input v-model="followActive" type="checkbox" id="followActive" name="followActive" role="switch">
-                Follow
-            </label>
-        </fieldset>
+            <fieldset>
+                <label for="followActive">
+                    <input v-model="followActive" type="checkbox" id="followActive" name="followActive" role="switch">
+                    Follow
+                </label>
+            </fieldset>
         </div>
     </section>
 
@@ -104,7 +116,9 @@
 
         // set data
         var data = {
-            simulateRpm:-1,
+            allowedQueuedHbs: 2,
+            showDebug: false,
+            simulateRpm: -1,
             followActive: true,
             playAudio: true,
             rideType: '{{ f.ride.ride_type }}',
@@ -206,6 +220,13 @@
             methods: {
                 performHeartbeat: function () {
 
+                    // allowed queued HB threshold
+                    if (this.queuedHeartbeats > parseInt(this.allowedQueuedHbs)) {
+                        return null;
+                    }
+
+                    this.queuedHeartbeats += 1;
+
                     // ensure heartbeats are not too backed up
                     var hbLimit = 15;
                     if (this.queuedHeartbeats > hbLimit) {
@@ -216,17 +237,16 @@
 
                     // simulate RPM
                     var simulateRpm = null
-                    if (parseInt(this.simulateRpm) >= 0){
+                    if (parseInt(this.simulateRpm) >= 0) {
                         simulateRpm = parseInt(this.simulateRpm)
                     }
 
                     // else, perform
                     axios.post('/api/heartbeat', {
                         "localRide": {"completed": this.localCompleted},
-                        "simulate_rpm":simulateRpm
+                        "simulate_rpm": simulateRpm
                     })
                         .then(response => {
-                            this.queuedHeartbeats -= 1;
                             let hb = response.data
 
                             // update reported
@@ -272,7 +292,7 @@
                                 }
 
                                 // pan to active if following
-                                if (this.followActive){
+                                if (this.followActive) {
                                     this.map.mapObj.panTo(this.map.layers.markerRider.getLatLng());
                                 }
 
@@ -291,14 +311,19 @@
                                 }
                             }
 
+                            // dequeue
+                            this.queuedHeartbeats -= 1;
+
                         })
-                        .catch(error => console.error(error));
+                        .catch(error => {
+                            this.queuedHeartbeats -= 1;
+                            console.error(error);
+                        });
                 },
                 startApiHeartbeat: function () {
                     this.polly(`Starting at ${this.percentComplete} percent`);
                     this.heartbeatInterval = setInterval(() => {
                         this.localCompleted += 1;
-                        this.queuedHeartbeats += 1;
                         this.performHeartbeat();
                     }, 1000);
                 },
