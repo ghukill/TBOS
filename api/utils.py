@@ -6,8 +6,6 @@ import traceback
 
 import flask
 
-from api.models import LCD, PybJobQueue, Bike
-
 app = flask.current_app
 
 
@@ -30,6 +28,8 @@ def parse_query_payload(request):
 def tbos_state_clear():
 
     """"""
+
+    from api.models import LCD, PybJobQueue, Bike
 
     print("TBOS init")
 

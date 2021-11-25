@@ -2,6 +2,7 @@
 TBOS API models
 """
 
+import ast
 from collections import namedtuple
 import datetime
 import json
@@ -29,6 +30,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import relationship
 import sqlite3
 
+from api.utils import parse_query_payload
 from .db import db
 from .exceptions import PybReplCmdError, PybReplRespError
 
@@ -313,9 +315,9 @@ class Bike(db.Model):
         current = int(((self._config.rm.upper_bound - self._config.rm.lower_bound) / 20) * level)
         rm = {"level": level, "current": current}
         virtual_status = {"rm": rm, "rpm": {"rpm": self.random_virtual_rpm}}
-        self.last_status = virtual_status
-        app.db.session.add(self)
-        app.db.session.commit()
+        # self.last_status = virtual_status
+        # app.db.session.add(self)
+        # app.db.session.commit()
         return virtual_status
 
     def get_status(self, raise_exceptions=False):
@@ -323,8 +325,6 @@ class Bike(db.Model):
         """
         Get status report from embedded controller about Bike
         """
-
-        t0 = time.time()
 
         # create and run job
         if self.is_virtual:
@@ -359,7 +359,6 @@ class Bike(db.Model):
         app.db.session.commit()
 
         # return
-        print(f"get status elapsed: {time.time()-t0}")
         return response
 
     def adjust_level(self, level, raise_exceptions=False):
@@ -643,8 +642,13 @@ class Ride(db.Model):
         """
         Return Ride status
         """
+        serialized_ride = self.serialize(include_heartbeats=include_heartbeats)
 
-        return {"ride": self.serialize(include_heartbeats=include_heartbeats)}
+        # pop values
+        excluded_keys = ["program"]
+        serialized_ride = {k: v for k, v in serialized_ride.items() if k not in excluded_keys}
+
+        return {"ride": serialized_ride}
 
     @classmethod
     def get_free_ride(cls):
@@ -771,16 +775,12 @@ class Ride(db.Model):
             # get CURRENT level
             cur_level = response["rm"]["level"]
 
-            # if current level != segment level, adjust
-            if cur_level != segment["level"]:
-                if self.ride_type != "gpx":
-                    print(f"adjusting level to match segment: {cur_level} --> {segment['level']}")
-
-                    # if new segment, adjust level (allows in-level manual adjusts to be sticky)
-                    if segment["is_new"]:
-                        segment["adjust_level"] = bike.adjust_level(segment["level"])
-                else:
-                    print(f"skipping program level adjustment, GPX ride")
+            # if non-GPX ride, and current level != segment level, adjust
+            if self.ride_type != "gpx" and cur_level != segment["level"]:
+                print(f"adjusting level to match segment: {cur_level} --> {segment['level']}")
+                # if new segment, adjust level (allows in-level manual adjusts to be sticky)
+                if segment["is_new"]:
+                    segment["adjust_level"] = bike.adjust_level(segment["level"])
 
             # return segment
             return segment
@@ -794,6 +794,7 @@ class Ride(db.Model):
         Extract segment from program
         """
 
+        t0 = time.time()
         segment = {"num": None, "level": None, "window": None, "is_new": False}
 
         for seg_num, _segment in enumerate(self.program):
@@ -807,6 +808,7 @@ class Ride(db.Model):
                     segment["is_new"] = True
 
         # return segment
+        print(f"get_program_segment(): {time.time()-t0}")
         return segment
 
     def parse_recorded_timeseries(self):
@@ -833,14 +835,58 @@ class Ride(db.Model):
             for segment in self.program:
                 output.extend([[segment[0], None, None, None] for _ in range(segment[1][0], segment[1][1])])
 
+        # # DEBUG -- method 1: SQLAlchemy
+        # # interleave heartbeats
+        # _t0 = time.time()
+        # hbs = self.heartbeats
+        # print(f"hb retrieve: {time.time() - _t0}")
+        # _t1 = time.time()
+        # for hb in hbs:
+        #     try:
+        #         output[hb.mark - 1][1] = hb.level
+        #         output[hb.mark - 1][2] = hb.rpm
+        #         output[hb.mark - 1][3] = hb.mph
+        #     except:
+        #         output.append([hb.mark, hb.level, hb.rpm, hb.mph])
+        # print(f"interleave: {time.time() - _t1}")
+
+        # # DEBUG -- method 2: raw SQL
+        # # interleave heartbeats
+        # _t0 = time.time()
+        # hbs = db.session.execute(
+        #     f"""select level, rpm, data, mark from heartbeat where ride_uuid = '{str(self.ride_uuid)}';"""
+        # ).fetchall()
+        # print(f"hb retrieve: {time.time() - _t0}")
+        # _t1 = time.time()
+        # for hb in hbs:
+        #     try:
+        #         output[hb.mark - 1][1] = hb.level
+        #         output[hb.mark - 1][2] = hb.rpm
+        #         output[hb.mark - 1][3] = json.loads(hb.data).get("speed", {}).get("mph")
+        #     except:
+        #         output.append([hb.mark, hb.level, hb.rpm, hb.mph])
+        # print(f"interleave: {time.time() - _t1}")
+
+        # # DEBUG -- method 3: Pandas
         # interleave heartbeats
-        for hb in self.heartbeats:
+        _t0 = time.time()
+        hbs = pd.read_sql(
+            f"""
+            select level, rpm, data, mark from heartbeat where ride_uuid = '{str(self.ride_uuid)}';
+            """,
+            db.engine,
+        )
+        print(f"hb retrieve: {time.time() - _t0}")
+        _t1 = time.time()
+        hbs["mph"] = hbs.data.apply(lambda x: json.loads(x).get("speed", {}).get("mph"))
+        for hb in hbs.itertuples():
             try:
                 output[hb.mark - 1][1] = hb.level
                 output[hb.mark - 1][2] = hb.rpm
                 output[hb.mark - 1][3] = hb.mph
             except:
                 output.append([hb.mark, hb.level, hb.rpm, hb.mph])
+        print(f"interleave: {time.time() - _t1}")
 
         print(f"full level data elapsed: {time.time()-t0}")
         return output
@@ -981,6 +1027,156 @@ class Heartbeat(db.Model):
     @property
     def mph(self):
         return self.data.get("speed", {}).get("mph")
+
+    @classmethod
+    def perform_heartbeat(cls, request):
+
+        """
+        Class method to perform heartbeat
+        """
+
+        try:
+
+            print("\n♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥")
+
+            hbt = time.time()
+
+            # init heartbeat
+            response = {}
+
+            # get bike
+            bike = Bike.current()
+
+            # get bike status
+            tb0 = time.time()
+            response.update(bike.get_status(raise_exceptions=True))
+            print(f"bike status elapsed: {time.time()-tb0}")
+
+            # get ride status
+            tr0 = time.time()
+            ride = Ride.current()
+            # NOTE: removing the free ride option
+            # if ride is None:
+            #     ride = Ride.get_free_ride()
+            response.update(ride.get_status(include_heartbeats=False))
+            print(f"ride status elapsed: {time.time() - tr0}")
+
+            # set speed in data
+            if response["rpm"]["rpm"] == 0:
+                mph = 0
+                fps = 0
+            else:
+                rpm, level = response["rpm"]["rpm"], response["rm"]["level"]
+                if ride.ride_type == "gpx":
+                    level = 8 + (8 - level)  # invert resistance and hill (QUESTION: is this inversion right?)
+                mph = round(rpm / ((20 / level) * 2.5), 2)
+                fps = round(((5280 * mph) / 60 / 60), 2)
+            response["speed"] = {"mph": mph, "fps": fps}
+
+            # if POST request, update Ride information
+            segment = None
+            if request.method == "POST":
+                ta0 = time.time()
+                payload = parse_query_payload(request)
+                # print(payload)
+                prev_completed = ride.completed
+                ride.completed = payload["localRide"]["completed"]
+
+                # handle program segment if program exists
+                segment = ride.handle_program_segment(response, bike)
+                ride.last_segment = segment
+
+                # bump cumulative distance
+                ride.cum_distance += (payload["localRide"]["completed"] - prev_completed) * response["speed"]["fps"]
+                print(f"new cumulative distance: {ride.cum_distance}")
+
+                ride.save()
+                print(f"ride update elapsed: {time.time() - ta0}")
+
+            # record heartbeat
+            thb0 = time.time()
+            hb = Heartbeat(hb_uuid=str(uuid.uuid4()), ride_uuid=ride.ride_uuid, data=response, mark=int(ride.completed))
+            hb.save()
+            print(f"heartbeat recorded elapsed: {time.time() - thb0}")
+
+            # prepare chart data
+            ride_data = ride.parse_recorded_timeseries()
+            labels = [f"{str(x)}s" for x in range(1, len(ride_data) + 1)]
+            level_datasets = [
+                {
+                    "label": "program",
+                    "borderColor": "deeppink",
+                    "borderWidth": 3,
+                    "data": [n[0] for n in ride_data],
+                },
+                {
+                    "label": "recorded",
+                    "borderColor": "rgba(0,255,0,0.7)",
+                    "backgroundColor": "rgba(0,255,0,0.3)",
+                    "borderWidth": 1,
+                    "data": [n[1] for n in ride_data],
+                    "fill": True,
+                },
+            ]
+            speed_datasets = [
+                {
+                    "label": "rpm",
+                    "borderColor": "blue",
+                    "borderWidth": 1,
+                    "data": [{0: None}.get(n[2], n[2]) for n in ride_data],
+                },
+                {
+                    "label": "mph",
+                    "borderColor": "orange",
+                    "borderWidth": 1,
+                    "data": [{0: None}.get(n[3], n[3]) for n in ride_data],
+                },
+            ]
+            response["chart_data"] = {"labels": labels, "datasets": level_datasets, "speed_datasets": speed_datasets}
+
+            # determine location and adjust level for GPX ride (TODO: move to method)
+            if ride.ride_type == "gpx":
+                # add ghost and active rider data
+                t10 = time.time()
+                ghost_lat, ghost_lon = None, None
+                if ride.gpx_df is not None:
+                    marks = ride.gpx_df[ride.gpx_df.mark == ride.completed]
+                    if len(marks) > 0:
+                        row = marks.iloc[0]
+                        ghost_lat, ghost_lon = row.latitude, row.longitude
+                # active rider
+                active_lat, active_lon = None, None
+                if ride.gpx_df is not None:
+                    nearest_gpx_point = ride.gpx_df.iloc[
+                        (ride.gpx_df["cum_distance"] - ride.cum_distance).abs().argsort()[:1]
+                    ].iloc[0]
+                    active_lat, active_lon = nearest_gpx_point.latitude, nearest_gpx_point.longitude
+                response["map"] = {
+                    "ghost_rider": {"latitude": ghost_lat, "longitude": ghost_lon},
+                    "active_rider": {"latitude": active_lat, "longitude": active_lon},
+                }
+
+                # adjust level to match active rider against program for that location
+                # NOTE: use ride method segment = self.get_program_segment(mark)
+                if segment is not None:
+                    active_rider_segment = segment
+                else:
+                    active_rider_segment = ride.get_program_segment(nearest_gpx_point.mark)
+                print(f"rider positions elapsed: {time.time() - t10}")
+
+                # adjust level when active rider in location
+                if int(response["rm"]["level"]) != active_rider_segment["level"]:
+                    bike.adjust_level(active_rider_segment["level"])
+
+            # return
+            print(f"heartbeat elapsed: {time.time()-hbt}")
+            print("♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥♥\n")
+            return response
+
+        except Exception as e:
+            print(str(e))
+            print(traceback.format_exc())
+            raise e
 
 
 class PybJobQueue(db.Model):

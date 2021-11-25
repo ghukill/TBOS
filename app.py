@@ -150,138 +150,14 @@ def create_app():
     @app.route("/api/heartbeat", methods=["GET", "POST"])
     def hearbeat():
 
+        """
+        Perform heartbeat
+        """
+
         try:
-            t1 = time.time()
-
-            # init heartbeat
-            response = {}
-
-            # get bike
-            bike = Bike.current()
-
-            # get bike status
-            tb0 = time.time()
-            response.update(bike.get_status(raise_exceptions=True))
-            print(f"bike status elapsed: {time.time()-tb0}")
-
-            # get ride status
-            tr0 = time.time()
-            ride = Ride.current()
-            if ride is None:
-                ride = Ride.get_free_ride()
-            response.update(ride.get_status())
-            print(f"ride status elapsed: {time.time() - tr0}")
-
-            # set speed in data
-            if response["rpm"]["rpm"] == 0:
-                mph = 0
-                fps = 0
-            else:
-                rpm, level = response["rpm"]["rpm"], response["rm"]["level"]
-                if ride.ride_type == "gpx":  # QUESTION: is this inversion right?
-                    level = 8 + (8 - level)  # invert resistance and hill
-                mph = round(rpm / ((20 / level) * 2.5), 2)
-                fps = round(((5280 * mph) / 60 / 60), 2)
-            response["speed"] = {"mph": mph, "fps": fps}
-
-            # if POST request, update Ride information
-            if request.method == "POST":
-                ta0 = time.time()
-                payload = parse_query_payload(request)
-                print(payload)
-                prev_completed = ride.completed
-                ride.completed = payload["localRide"]["completed"]
-
-                # handle program segment if program exists
-                segment = ride.handle_program_segment(response, bike)
-                ride.last_segment = segment
-
-                # bump cumulative distance
-                ride.cum_distance += (payload["localRide"]["completed"] - prev_completed) * response["speed"]["fps"]
-                print(f"new cumulative distance: {ride.cum_distance}")
-
-                ride.save()
-                print(f"ride update elapsed: {time.time() - ta0}")
-
-            # record heartbeat
-            thb0 = time.time()
-            hb = Heartbeat(hb_uuid=str(uuid.uuid4()), ride_uuid=ride.ride_uuid, data=response, mark=ride.completed)
-            hb.save()
-            print(f"heartbeat recorded elapsed: {time.time() - thb0}")
-
-            # prepare chart data
-            ride_data = ride.parse_recorded_timeseries()
-            labels = [f"{str(x)}s" for x in range(1, len(ride_data) + 1)]
-            level_datasets = [
-                {
-                    "label": "program",
-                    "borderColor": "deeppink",
-                    "borderWidth": 3,
-                    "data": [n[0] for n in ride_data],
-                },
-                {
-                    "label": "recorded",
-                    "borderColor": "rgba(0,255,0,0.7)",
-                    "backgroundColor": "rgba(0,255,0,0.3)",
-                    "borderWidth": 1,
-                    "data": [n[1] for n in ride_data],
-                    "fill": True,
-                },
-            ]
-            speed_datasets = [
-                {
-                    "label": "rpm",
-                    "borderColor": "blue",
-                    "borderWidth": 1,
-                    "data": [{0: None}.get(n[2], n[2]) for n in ride_data],
-                },
-                {
-                    "label": "mph",
-                    "borderColor": "orange",
-                    "borderWidth": 1,
-                    "data": [{0: None}.get(n[3], n[3]) for n in ride_data],
-                },
-            ]
-            response["chart_data"] = {"labels": labels, "datasets": level_datasets, "speed_datasets": speed_datasets}
-
-            # determine location and adjust level for GPX ride (TODO: move to method)
-            if ride.ride_type == "gpx":
-                # add ghost and active rider data
-                t10 = time.time()
-                ghost_lat, ghost_lon = None, None
-                if ride.gpx_df is not None:
-                    marks = ride.gpx_df[ride.gpx_df.mark == ride.completed]
-                    if len(marks) > 0:
-                        row = marks.iloc[0]
-                        ghost_lat, ghost_lon = row.latitude, row.longitude
-                # active rider
-                active_lat, active_lon = None, None
-                if ride.gpx_df is not None:
-                    nearest_gpx_point = ride.gpx_df.iloc[
-                        (ride.gpx_df["cum_distance"] - ride.cum_distance).abs().argsort()[:1]
-                    ].iloc[0]
-                    active_lat, active_lon = nearest_gpx_point.latitude, nearest_gpx_point.longitude
-                response["map"] = {
-                    "ghost_rider": {"latitude": ghost_lat, "longitude": ghost_lon},
-                    "active_rider": {"latitude": active_lat, "longitude": active_lon},
-                }
-                print(f"rider elapsed: {time.time()-t10}")
-
-                # adjust level to match active rider against program for that location
-                # NOTE: use ride method segment = self.get_program_segment(mark)
-                active_rider_segment = ride.get_program_segment(nearest_gpx_point.mark)
-
-                # adjust level when active rider in location
-                if int(response["rm"]["level"]) != active_rider_segment["level"]:
-                    bike.adjust_level(active_rider_segment["level"])
-
-            # return
-            print(f"heartbeat elapsed: {time.time()-t1}")
+            response = Heartbeat.perform_heartbeat(request)
             return jsonify(response)
-
         except Exception as e:
-            print(str(e))
-            print(traceback.format_exc())
             return jsonify({"error": str(e)}), 500
 
     @app.route("/api/rides", methods=["GET"])
