@@ -84,9 +84,7 @@
                 <th scope="col">Name</th>
                 <th scope="col">Ride Type</th>
                 <th scope="col">Created</th>
-                <th scope="col">Duration</th>
-                <th scope="col">Completed</th>
-                <th scope="col">Program</th>
+                <th scope="col">Progress</th>
             </tr>
             </thead>
             <tbody>
@@ -95,10 +93,16 @@
                     <th scope="row"><a href="/gui/ride/{{ ride.ride_uuid }}">{{ ride.name }}<a/></th>
                     <td>{% if ride.ride_type == 'gpx' %}Map{% else %}Random{% endif %}</td>
                     <td>{{ ride.date_start.strftime("%a, %d.%m.%Y") }}</td>
-                    <td><code>{|{ makePrettyTime({{ (ride.duration) }}) }|}</code></td>
-                    <td><code>{|{ makePrettyTime({{ (ride.completed) }}) }|} ({|{
-                        percentComplete({{ ride.duration }}, {{ ride.completed }}) }|}%)</code></td>
-                    <td>This will be a picture...</td>
+                    <td>
+                        <code style="">{|{ makePrettyTime({{ (ride.completed) }}) }|} / {|{
+                            makePrettyTime({{ ride.duration }}) }|} ({|{
+                            percentComplete({{ ride.duration }}, {{ ride.completed }})}|}%){% if ride.ride_type == 'gpx' %}<span>,
+                                {|{ rideDistance({{ ride.cum_distance }}, {{ ride.total_distance }}).cum }|}mi
+                                / {|{ rideDistance({{ ride.cum_distance }}, {{ ride.total_distance }}).total }|}mi
+                                ({|{ rideDistance({{ ride.cum_distance }}, {{ ride.total_distance }}).percent}|}%)
+                            </span>{% endif %}
+                        </code>
+                    </td>
                 </tr>
             {% endfor %}
             </tbody>
@@ -130,6 +134,21 @@
             delimiters: ['{|{', '}|}'],
             computed: {},
             methods: {
+                rideDistance(cumDistance, totalDistance) {
+                    var cumDistanceMiles = 0
+                    if (cumDistance > 0) {
+                        cumDistanceMiles = Math.round((cumDistance / 5280) * 100) / 100
+                    }
+                    var totalDistanceMiles = 0
+                    if (totalDistance > 0) {
+                        totalDistanceMiles = Math.round((totalDistance / 5280) * 100) / 100
+                    }
+                    return {
+                        cum: cumDistanceMiles,
+                        total: totalDistanceMiles,
+                        percent: Math.round((cumDistanceMiles / totalDistanceMiles) * 100)
+                    }
+                },
                 makePrettyTime(s) {
                     return makePrettyTime(s);
                 },
