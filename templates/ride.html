@@ -42,41 +42,55 @@
                             }|}%)</span>
                     </code>
                 </td>
+                <td></td>
             </tr>
             <tr>
                 <td>Level:</td>
                 <td>
-                    <code style="color:deeppink;">{|{ bike.level }|}</code> <a role="button"
-                                                                               style="margin-left:15px; background-color: green; border-color: green; font-size:200%;"
-                                                                               @click="adjustLevel(1)">↑</a>
-                    <a role="button" style="margin-left:15px; background-color: red; border-color: red; font-size:200%;"
+                    <code style="color:deeppink;">{|{ bike.level }|}</code>
+                    <a role="button"
+                       style="margin-left:15px; background-color: green; border-color: green; font-size:200%;"
+                       @click="adjustLevel(1)">↑</a>
+                    <a role="button"
+                       style="margin-left:15px; background-color: red; border-color: red; font-size:200%;"
                        @click="adjustLevel(-1)">↓</a>
+                </td>
+                <td>
+                    <fieldset>
+                        <label for="overrideProgram">
+                            <input @click="polly('sorry, this currently does absolutely nothing')" v-model="overrideProgram" type="checkbox" id="overrideProgram"
+                                   name="overrideProgram" role="switch">
+                            Override Program
+                        </label>
+                    </fieldset>
                 </td>
             </tr>
             <tr>
                 <td>Speed:</td>
                 <td><code style="color:deeppink;">{|{ Math.round((bike.reported.rpm.rpm) * 100) / 100 }|}rpm, {|{
                     bike.reported.speed.mph }|}mph</code></td>
+                <td></td>
             </tr>
             <tr>
                 <td @click="showDebug = !showDebug;">Debug</td>
                 <td v-if="showDebug">
-                    <section>
+                    <div class="grid">
                         <label for="simulateRpm">Simulate RPM: <code>{|{ simulateRpm }|}</code>
                             <input v-model="simulateRpm" type="range" min="-1" max="200" id="simulateRpm"
                                    name="simulateRpm">
                         </label>
-                    </section>
-                    <section>
-                        <label for="allowedQueuedHbs">Queued HBs: <code>{|{ queuedHeartbeats }|}</code>, Allowed: <code>{|{ allowedQueuedHbs }|}</code>
+
+                        <label for="allowedQueuedHbs">Queued HBs: <code>{|{ queuedHeartbeats }|}</code>, Allowed: <code>{|{
+                            allowedQueuedHbs }|}</code>
                             <input v-model="allowedQueuedHbs" type="range" min="1" max="20" id="allowedQueuedHbs"
                                    name="allowedQueuedHbs">
                         </label>
-                    </section>
+                    </div>
                 </td>
                 <td v-else>
                     ...
                 </td>
+                <td></td>
             </tr>
             </tbody>
         </table>
@@ -116,6 +130,7 @@
 
         // set data
         var data = {
+            overrideProgram: false,
             allowedQueuedHbs: 2,
             showDebug: false,
             simulateRpm: -1,
@@ -244,7 +259,8 @@
                     // else, perform
                     axios.post('/api/heartbeat', {
                         "localRide": {"completed": this.localCompleted},
-                        "simulate_rpm": simulateRpm
+                        "simulate_rpm": simulateRpm,
+                        "override_program": this.overrideProgram
                     })
                         .then(response => {
                             let hb = response.data

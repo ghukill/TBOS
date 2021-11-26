@@ -68,6 +68,17 @@
                         </label>
                     </div>
 
+                    <div class="grid">
+                        <label for="level_low">Lowest Level (<code style="color: deeppink">{|{ level_low }|}</code>)
+                            <input v-model="level_low" type="range" min="1" max="20" value="4" id="level_low"
+                                   name="level_low">
+                        </label>
+                        <label for="level_high">Highest Level (<code style="color: deeppink">{|{ level_high }|}</code>)
+                            <input v-model="level_high" type="range" min="1" max="20" value="12" id="level_high"
+                                   name="level_high">
+                        </label>
+                    </div>
+
                     <!-- Submit -->
                     <input type="hidden" name="ride_type" value="gpx"/>
                     <button type="submit">Get it!</button>
@@ -96,7 +107,8 @@
                     <td>
                         <code style="">{|{ makePrettyTime({{ (ride.completed) }}) }|} / {|{
                             makePrettyTime({{ ride.duration }}) }|} ({|{
-                            percentComplete({{ ride.duration }}, {{ ride.completed }})}|}%){% if ride.ride_type == 'gpx' %}<span>,
+                            percentComplete({{ ride.duration }}, {{ ride.completed }})}|}%)
+                            {% if ride.ride_type == 'gpx' %}<span>,
                                 {|{ rideDistance({{ ride.cum_distance }}, {{ ride.total_distance }}).cum }|}mi
                                 / {|{ rideDistance({{ ride.cum_distance }}, {{ ride.total_distance }}).total }|}mi
                                 ({|{ rideDistance({{ ride.cum_distance }}, {{ ride.total_distance }}).percent}|}%)
