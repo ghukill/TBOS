@@ -49,7 +49,7 @@
                 </form>
             </article>
         </details>
-        <details open>
+        <details>
             <summary>Load GPX Ride</summary>
             <article>
                 <form action="/gui/rides" method="POST" enctype="multipart/form-data">
@@ -82,7 +82,8 @@
             <thead>
             <tr>
                 <th scope="col">Name</th>
-                <th scope="col">Date</th>
+                <th scope="col">Ride Type</th>
+                <th scope="col">Created</th>
                 <th scope="col">Duration</th>
                 <th scope="col">Completed</th>
                 <th scope="col">Program</th>
@@ -92,6 +93,7 @@
             {% for ride in f.rides %}
                 <tr>
                     <th scope="row"><a href="/gui/ride/{{ ride.ride_uuid }}">{{ ride.name }}<a/></th>
+                    <td>{% if ride.ride_type == 'gpx' %}Map{% else %}Random{% endif %}</td>
                     <td>{{ ride.date_start.strftime("%a, %d.%m.%Y") }}</td>
                     <td><code>{|{ makePrettyTime({{ (ride.duration) }}) }|}</code></td>
                     <td><code>{|{ makePrettyTime({{ (ride.completed) }}) }|} ({|{

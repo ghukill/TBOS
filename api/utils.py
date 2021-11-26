@@ -55,21 +55,22 @@ def tbos_state_clear():
     current_bike = Bike.current()
     print(f"Current bike: {current_bike}")
 
-    # clearing current rides
-    print("clearing current ride...")
-    try:
-        app.db.session.execute(
-            """
-            update ride set is_current = 0
-            """
-        )
-        app.db.session.execute(
-            """
-            update ride set last_segment = NULL
-            """
-        )
-    except Exception as e:
-        print({"error": str(e), "traceback": traceback.format_exc()})
+    # NOTE: remove this, why not keep current ride?
+    # # clearing current rides
+    # print("clearing current ride...")
+    # try:
+    #     app.db.session.execute(
+    #         """
+    #         update ride set is_current = 0
+    #         """
+    #     )
+    #     app.db.session.execute(
+    #         """
+    #         update ride set last_segment = NULL
+    #         """
+    #     )
+    # except Exception as e:
+    #     print({"error": str(e), "traceback": traceback.format_exc()})
 
     # commit
     app.db.session.commit()

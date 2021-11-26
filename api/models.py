@@ -1060,9 +1060,6 @@ class Heartbeat(db.Model):
             # get ride status
             tr0 = time.time()
             ride = Ride.current()
-            # NOTE: removing the free ride option
-            # if ride is None:
-            #     ride = Ride.get_free_ride()
             response.update(ride.get_status(include_heartbeats=False))
             print(f"ride status elapsed: {time.time() - tr0}")
 
@@ -1082,7 +1079,8 @@ class Heartbeat(db.Model):
             if request.method == "POST":
                 ta0 = time.time()
                 payload = parse_query_payload(request)
-                # print(payload)
+
+                # update completed
                 prev_completed = ride.completed
                 ride.completed = payload["localRide"]["completed"]
 
